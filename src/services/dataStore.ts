@@ -9,7 +9,8 @@ import {
   DriverProfile,
   PickupRequest,
   DriverReport,
-  PickupRequestStatus
+  PickupRequestStatus,
+  ExamModeStudentStatus
 } from '../types';
 import { 
   DEMO_VILLAGES, 
@@ -319,6 +320,149 @@ class LocalDataStore {
     this.savePickupRequests(list);
   }
 
+  // Broadcast request to all matching drivers heading towards student's destination
+  broadcastPickupRequest(reqData: {
+    studentId: string;
+    studentName: string;
+    studentPhone?: string;
+    pickupLocationName: string;
+    pickupCoordinates?: { lat: number; lng: number };
+    destinationName: string;
+    destinationCoordinates?: { lat: number; lng: number };
+    hasExamToday?: boolean;
+    examTime?: string;
+    latestArrivalTime?: string;
+    urgency?: 'high' | 'critical' | 'normal';
+    guardianPhone?: string;
+    notes?: string;
+  }): PickupRequest {
+    const newReq: PickupRequest = {
+      id: `req-bcast-${Date.now()}`,
+      studentId: reqData.studentId,
+      studentName: reqData.studentName,
+      studentPhone: reqData.studentPhone,
+      pickupLocationName: reqData.pickupLocationName,
+      pickupCoordinates: reqData.pickupCoordinates,
+      destinationName: reqData.destinationName,
+      destinationCoordinates: reqData.destinationCoordinates,
+      hasExamToday: reqData.hasExamToday !== undefined ? reqData.hasExamToday : true,
+      examTime: reqData.examTime || '10:30 AM',
+      latestArrivalTime: reqData.latestArrivalTime || '10:15 AM',
+      urgency: reqData.urgency || 'critical',
+      isBroadcast: true,
+      driverId: 'broadcast',
+      driverName: 'Broadcasting to nearby verified drivers',
+      status: 'searching',
+      requestedAt: new Date().toISOString(),
+      guardianAlertSent: !!reqData.guardianPhone,
+      guardianPhone: reqData.guardianPhone,
+      notes: reqData.notes || 'Broadcasted Exam Priority Ride'
+    };
+
+    this.createPickupRequest(newReq);
+    return newReq;
+  }
+
+  // Atomic acceptance of a pickup request (Prevents race conditions where two drivers both accept)
+  atomicAcceptPickupRequest(
+    requestId: string, 
+    driver: DriverProfile
+  ): { success: boolean; request?: PickupRequest; error?: string } {
+    const list = this.getPickupRequests();
+    const index = list.findIndex(r => r.id === requestId);
+
+    if (index === -1) {
+      return { success: false, error: 'Pickup request not found.' };
+    }
+
+    const current = list[index];
+
+    // Transaction-safe check: Only allow if still in 'searching' or 'requested'
+    if (current.status !== 'searching' && current.status !== 'requested') {
+      return { 
+        success: false, 
+        error: `Ride already ${current.status === 'accepted' ? 'accepted by another driver' : current.status}.` 
+      };
+    }
+
+    // Check driver available seats
+    if (driver.seatsFree <= 0) {
+      return { success: false, error: 'No available seats free in your vehicle.' };
+    }
+
+    // Atomic update
+    current.status = 'accepted';
+    current.driverId = driver.id;
+    current.driverName = driver.fullName;
+    current.driverPhone = driver.phone;
+    current.driverPhotoUrl = driver.photoUrl;
+    current.driverRating = driver.rating;
+    current.driverVehiclePlate = driver.vehicleNumberPlate;
+    current.driverVehicleType = driver.vehicleType;
+    current.driverEtaMinutes = 6;
+    current.acceptedAt = new Date().toISOString();
+
+    // Deduct driver seat
+    this.adjustDriverSeats(driver.id, -1);
+    this.savePickupRequests(list);
+
+    return { success: true, request: current };
+  }
+
+  // Cancel or Re-open request
+  cancelPickupRequest(
+    requestId: string, 
+    cancelledBy: 'student' | 'driver'
+  ): { success: boolean; request?: PickupRequest } {
+    const list = this.getPickupRequests();
+    const index = list.findIndex(r => r.id === requestId);
+
+    if (index === -1) return { success: false };
+
+    const req = list[index];
+
+    if (cancelledBy === 'driver') {
+      // Restore driver seat
+      if (req.driverId && req.driverId !== 'broadcast') {
+        this.adjustDriverSeats(req.driverId, 1);
+      }
+      // Re-open request to searching pool
+      req.status = 'searching';
+      req.driverId = 'broadcast';
+      req.driverName = 'Broadcasting to nearby verified drivers';
+      req.driverVehiclePlate = undefined;
+      req.acceptedAt = undefined;
+    } else {
+      // Cancelled by student
+      if (req.status === 'accepted' && req.driverId && req.driverId !== 'broadcast') {
+        this.adjustDriverSeats(req.driverId, 1);
+      }
+      req.status = 'cancelled';
+    }
+
+    this.savePickupRequests(list);
+    return { success: true, request: req };
+  }
+
+  // Rate driver after trip
+  rateDriver(requestId: string, rating: number, feedback?: string) {
+    const list = this.getPickupRequests();
+    const index = list.findIndex(r => r.id === requestId);
+    if (index !== -1) {
+      list[index].studentRating = rating;
+      if (feedback) list[index].studentFeedback = feedback;
+      
+      const driverId = list[index].driverId;
+      const driver = this.getDriverById(driverId);
+      if (driver) {
+        const oldRating = driver.rating || 5.0;
+        const newRating = parseFloat(((oldRating * 4 + rating) / 5).toFixed(1));
+        this.updateDriver(driverId, { rating: newRating });
+      }
+      this.savePickupRequests(list);
+    }
+  }
+
   updatePickupRequestStatus(
     requestId: string, 
     status: PickupRequestStatus, 
@@ -331,9 +475,8 @@ class LocalDataStore {
       if (notes) list[index].notes = notes;
       if (status === 'accepted') {
         list[index].acceptedAt = new Date().toISOString();
-      } else if (status === 'dropped') {
+      } else if (status === 'dropped' || status === 'reached') {
         list[index].completedAt = new Date().toISOString();
-        // Increment driver helped count
         const driverId = list[index].driverId;
         const driver = this.getDriverById(driverId);
         if (driver) {
@@ -348,11 +491,59 @@ class LocalDataStore {
   }
 
   getRequestsForDriver(driverId: string): PickupRequest[] {
-    return this.getPickupRequests().filter(r => r.driverId === driverId);
+    return this.getPickupRequests().filter(r => 
+      r.driverId === driverId || 
+      (r.isBroadcast && (r.status === 'searching' || r.status === 'requested'))
+    );
   }
 
   getRequestsForStudent(studentId: string): PickupRequest[] {
     return this.getPickupRequests().filter(r => r.studentId === studentId);
+  }
+
+  // Live Exam Mode Students Monitor List for Admin
+  getExamModeStudentsList(): ExamModeStudentStatus[] {
+    const requests = this.getRequests().filter(r => r.hasExam);
+    const pickupReqs = this.getPickupRequests().filter(p => p.hasExamToday);
+
+    return requests.map((r, i) => {
+      const matchPickup = pickupReqs.find(p => p.studentId === r.studentId || p.studentName === r.displayName);
+      const village = this.getVillages().find(v => v.id === r.villageId)?.name || 'Mulki';
+      const inst = this.getInstitutions().find(inst => inst.id === r.destinationId)?.name || 'Kadri Polytechnic';
+
+      let status: 'Assigned' | 'On the way' | 'Reached' | 'At risk' = 'Assigned';
+      let allocated = r.allocatedVehicleName || 'KSRTC Express #1101';
+
+      if (matchPickup) {
+        if (matchPickup.status === 'reached' || matchPickup.status === 'dropped') {
+          status = 'Reached';
+        } else if (matchPickup.status === 'accepted' || matchPickup.status === 'on_the_way' || matchPickup.status === 'picked_up') {
+          status = 'On the way';
+          allocated = `${matchPickup.driverName} (${matchPickup.driverVehiclePlate})`;
+        } else if (matchPickup.status === 'searching') {
+          status = 'At risk';
+          allocated = 'Searching for driver...';
+        }
+      } else if (r.status === 'unassigned' || r.status === 'pending') {
+        status = 'At risk';
+        allocated = 'Unassigned';
+      }
+
+      return {
+        studentId: r.studentId,
+        studentName: r.displayName,
+        villageName: village,
+        examCenterName: inst.split('(')[0].trim(),
+        examTime: r.examStartTime || '10:30 AM',
+        latestArrivalTime: '10:15 AM',
+        leaveByTime: '08:35 AM',
+        timeRemainingText: '1h 25m',
+        status,
+        allocatedTransportName: allocated,
+        driverContact: matchPickup?.driverPhone || '+91 98450 22001',
+        isLateRisk: status === 'At risk'
+      };
+    });
   }
 
   // -------------------------------------------------------------

@@ -28,6 +28,7 @@ import { Vehicle, DriverProfile, PickupRequest } from '../types';
 import { LiveTransitMap } from '../components/map/LiveTransitMap';
 import { LanguageToggle, SupportedLanguage, TRANSLATIONS } from '../components/common/LanguageToggle';
 import { FirstTimeTourModal } from '../components/common/FirstTimeTourModal';
+import { ExamModeView } from '../components/student/ExamModeView';
 
 interface Props {
   navigate?: (route: string) => void;
@@ -38,6 +39,7 @@ export const StudentPortal: React.FC<Props> = ({ navigate }) => {
   const [activeTab, setActiveTab] = useState<'home' | 'map' | 'help' | 'profile'>('home');
   const [language, setLanguage] = useState<SupportedLanguage>('en');
   const [showTour, setShowTour] = useState(false);
+  const [isExamModeActive, setIsExamModeActive] = useState<boolean>(true); // Default focused high-priority exam mode
 
   // Real-time reactive data from dataStore
   const [buses, setBuses] = useState<Vehicle[]>([]);
@@ -228,7 +230,40 @@ export const StudentPortal: React.FC<Props> = ({ navigate }) => {
 
       {/* TAB 1: HOME SCREEN */}
       {activeTab === 'home' && (
-        <div className="space-y-4">
+        isExamModeActive ? (
+          <ExamModeView
+            user={user}
+            language={language}
+            onExitExamMode={() => setIsExamModeActive(false)}
+            onTrackOnMap={(bus) => {
+              if (bus) setSelectedTrackedBus(bus);
+              setActiveTab('map');
+            }}
+          />
+        ) : (
+          <div className="space-y-4">
+            {/* Prominent Exam Mode Activation Card (Requirement A.1) */}
+            <div className="bg-gradient-to-r from-amber-500/15 via-amber-400/10 to-emerald-500/15 border-2 border-amber-400 rounded-3xl p-5 shadow-sm space-y-3">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-center space-x-2.5">
+                  <div className="p-2.5 bg-amber-500 text-slate-950 rounded-2xl font-black shadow-md">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-black text-slate-900">Exam today? Turn on Exam Mode</h4>
+                    <p className="text-xs text-slate-600">
+                      Switches to high-priority countdown, safe leave-by times, and priority driver matching.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsExamModeActive(true)}
+                  className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-md whitespace-nowrap"
+                >
+                  Turn On Exam Mode
+                </button>
+              </div>
+            </div>
           {/* Automatic Bus Disruption Alert Banner */}
           {busHasProblem && (
             <div className="p-4 bg-red-50 border-2 border-red-300 rounded-2xl text-red-900 shadow-sm flex items-center justify-between">
@@ -445,7 +480,7 @@ export const StudentPortal: React.FC<Props> = ({ navigate }) => {
             )}
           </div>
         </div>
-      )}
+      ))}
 
       {/* TAB 2: FULL MAP VIEW */}
       {activeTab === 'map' && (

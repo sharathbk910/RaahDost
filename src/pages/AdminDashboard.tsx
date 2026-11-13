@@ -496,63 +496,127 @@ export const AdminDashboard: React.FC<Props> = ({ navigate }) => {
           {/* TAB 3: INSTITUTIONS & STUDENTS */}
           {/* ======================================================== */}
           {activeTab === 'students' && (
-            <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <div>
-                  <h3 className="text-sm font-black text-slate-900">Student Transit Roster</h3>
-                  <p className="text-xs text-slate-500">Filter students by taluk, college, and upcoming exams.</p>
+            <div className="space-y-6">
+              {/* EXAM STUDENTS LIVE STATUS MONITOR (Requirement A.1) */}
+              <div className="bg-gradient-to-r from-amber-500/15 to-emerald-500/10 border-2 border-amber-400 rounded-3xl p-6 shadow-sm space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2.5">
+                    <div className="p-2 bg-amber-500 text-slate-950 rounded-xl font-black">
+                      <Sparkles className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-black text-slate-900">
+                        Exam Students Live Tracking Monitor ({db.getExamModeStudentsList().length} Students)
+                      </h3>
+                      <p className="text-xs text-slate-600">
+                        Live exam transit monitoring: Assigned ➔ On the way ➔ Reached ➔ At risk
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-black uppercase text-amber-900 bg-amber-200/80 px-2.5 py-1 rounded-full">
+                    Priority Dispatch
+                  </span>
                 </div>
 
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="text"
-                    placeholder="Search student name..."
-                    value={studentSearch}
-                    onChange={(e) => setStudentSearch(e.target.value)}
-                    className="px-3 py-1.5 border rounded-xl text-xs"
-                  />
-                  <label className="flex items-center space-x-1.5 text-xs font-bold text-slate-700 cursor-pointer">
+                <div className="overflow-x-auto bg-white rounded-2xl border border-slate-200 shadow-inner">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
+                      <tr>
+                        <th className="py-2.5 px-3">Student Name</th>
+                        <th className="py-2.5 px-3">Origin ➔ Exam Center</th>
+                        <th className="py-2.5 px-3">Exam Time</th>
+                        <th className="py-2.5 px-3">Assigned Vehicle / Driver</th>
+                        <th className="py-2.5 px-3">Live Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {db.getExamModeStudentsList().map((item) => (
+                        <tr key={item.studentId} className="hover:bg-slate-50/50">
+                          <td className="py-2.5 px-3 font-bold text-slate-900">{item.studentName}</td>
+                          <td className="py-2.5 px-3 text-slate-600">{item.villageName} ➔ {item.examCenterName}</td>
+                          <td className="py-2.5 px-3">
+                            <span className="font-bold text-slate-900">{item.examTime}</span>
+                            <span className="text-[10px] text-slate-400 block">Must arrive: {item.latestArrivalTime}</span>
+                          </td>
+                          <td className="py-2.5 px-3 font-semibold text-slate-800">{item.allocatedTransportName}</td>
+                          <td className="py-2.5 px-3">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${
+                              item.status === 'Reached'
+                                ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                                : item.status === 'On the way'
+                                  ? 'bg-amber-100 text-amber-800 border-amber-300'
+                                  : item.status === 'At risk'
+                                    ? 'bg-red-100 text-red-800 border-red-300'
+                                    : 'bg-blue-100 text-blue-800 border-blue-300'
+                            }`}>
+                              {item.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* General Student Roster */}
+              <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-black text-slate-900">Student Transit Roster</h3>
+                    <p className="text-xs text-slate-500">Filter students by taluk, college, and upcoming exams.</p>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
                     <input
-                      type="checkbox"
-                      checked={filterExamOnly}
-                      onChange={(e) => setFilterExamOnly(e.target.checked)}
-                      className="accent-amber-600"
+                      type="text"
+                      placeholder="Search student name..."
+                      value={studentSearch}
+                      onChange={(e) => setStudentSearch(e.target.value)}
+                      className="px-3 py-1.5 border rounded-xl text-xs"
                     />
-                    <span>Exams Only</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Filters */}
-              <div className="grid grid-cols-2 gap-3 text-xs">
-                <div>
-                  <label className="block font-bold text-slate-600 mb-1">Filter by Village</label>
-                  <select
-                    value={filterVillage}
-                    onChange={(e) => setFilterVillage(e.target.value)}
-                    className="w-full p-2 border rounded-xl bg-white"
-                  >
-                    <option value="all">All Villages (Dakshina Kannada)</option>
-                    {villages.map(v => (
-                      <option key={v.id} value={v.id}>{v.name}</option>
-                    ))}
-                  </select>
+                    <label className="flex items-center space-x-1.5 text-xs font-bold text-slate-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={filterExamOnly}
+                        onChange={(e) => setFilterExamOnly(e.target.checked)}
+                        className="accent-amber-600"
+                      />
+                      <span>Exams Only</span>
+                    </label>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block font-bold text-slate-600 mb-1">Filter by College</label>
-                  <select
-                    value={filterInstitution}
-                    onChange={(e) => setFilterInstitution(e.target.value)}
-                    className="w-full p-2 border rounded-xl bg-white"
-                  >
-                    <option value="all">All Institutions</option>
-                    {institutions.map(i => (
-                      <option key={i.id} value={i.id}>{i.name}</option>
-                    ))}
-                  </select>
+                {/* Filters */}
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <label className="block font-bold text-slate-600 mb-1">Filter by Village</label>
+                    <select
+                      value={filterVillage}
+                      onChange={(e) => setFilterVillage(e.target.value)}
+                      className="w-full p-2 border rounded-xl bg-white"
+                    >
+                      <option value="all">All Villages (Dakshina Kannada)</option>
+                      {villages.map(v => (
+                        <option key={v.id} value={v.id}>{v.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-600 mb-1">Filter by College</label>
+                    <select
+                      value={filterInstitution}
+                      onChange={(e) => setFilterInstitution(e.target.value)}
+                      className="w-full p-2 border rounded-xl bg-white"
+                    >
+                      <option value="all">All Institutions</option>
+                      {institutions.map(i => (
+                        <option key={i.id} value={i.id}>{i.name}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-              </div>
 
               {/* Student Roster Table */}
               <div className="overflow-x-auto">
@@ -600,7 +664,8 @@ export const AdminDashboard: React.FC<Props> = ({ navigate }) => {
                 </table>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
           {/* ======================================================== */}
           {/* TAB 4: DRIVER APPROVALS QUEUE */}

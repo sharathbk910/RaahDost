@@ -127,18 +127,20 @@ export const DriverPortal: React.FC<Props> = ({ navigate }) => {
     setSeatsFree(prev => Math.max(0, Math.min((driver.totalSeats || 6), prev + delta)));
   };
 
-  // Accept Pickup Request
+  // Accept Pickup Request atomically (transaction-safe)
   const handleAcceptRequest = (req: PickupRequest) => {
-    db.updatePickupRequestStatus(req.id, 'accepted');
-    setAcceptedRequest({ ...req, status: 'accepted' });
+    if (!driver) return;
+    const res = db.atomicAcceptPickupRequest(req.id, driver);
+    if (!res.success) {
+      alert(res.error || 'This ride was already accepted by another driver.');
+      return;
+    }
+    setAcceptedRequest(res.request || { ...req, status: 'accepted' });
   };
 
-  // Decline Pickup Request
+  // Decline or Cancel Pickup Request
   const handleDeclineRequest = (req: PickupRequest) => {
-    db.updatePickupRequestStatus(req.id, 'declined');
-    if (driver) {
-      db.adjustDriverSeats(driver.id, 1); // Restore seat
-    }
+    db.cancelPickupRequest(req.id, 'driver');
     if (acceptedRequest?.id === req.id) {
       setAcceptedRequest(null);
     }
@@ -438,27 +440,34 @@ export const DriverPortal: React.FC<Props> = ({ navigate }) => {
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <h5 className="text-sm font-black text-slate-900">{req.studentName}</h5>
+                      <div className="flex items-center space-x-1.5">
+                        <h5 className="text-sm font-black text-slate-900">{req.studentName}</h5>
+                        {req.isBroadcast && (
+                          <span className="text-[9px] bg-purple-100 text-purple-800 font-extrabold px-1.5 py-0.5 rounded">
+                            BROADCAST
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-slate-500">
-                        Boarding at: <strong>{req.pickupLocationName}</strong>
+                        Boarding at: <strong>{req.pickupLocationName}</strong> ➔ {req.destinationName.split('(')[0]}
                       </p>
                     </div>
 
                     {req.hasExamToday && (
-                      <span className="text-[10px] font-black text-amber-800 bg-amber-100 px-2 py-0.5 rounded border border-amber-300">
-                        Exam: {req.examTime}
+                      <span className="text-[10px] font-black text-amber-900 bg-amber-100 px-2 py-0.5 rounded border border-amber-300 animate-pulse">
+                        ⚡ EXAM: {req.examTime || '10:30 AM'}
                       </span>
                     )}
                   </div>
 
-                  {req.status === 'requested' ? (
+                  {(req.status === 'requested' || req.status === 'searching') ? (
                     <div className="flex gap-2 pt-1">
                       <button
                         onClick={() => handleAcceptRequest(req)}
                         className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm flex items-center justify-center space-x-1"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>Accept Pickup</span>
+                        <span>Accept Pickup ({req.hasExamToday ? 'Exam Priority' : 'Regular'})</span>
                       </button>
                       <button
                         onClick={() => handleDeclineRequest(req)}
@@ -468,9 +477,17 @@ export const DriverPortal: React.FC<Props> = ({ navigate }) => {
                       </button>
                     </div>
                   ) : (
-                    <div className="text-xs font-bold text-emerald-700 flex items-center space-x-1">
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>Request status: {req.status}</span>
+                    <div className="text-xs font-bold text-emerald-700 flex items-center justify-between pt-1">
+                      <div className="flex items-center space-x-1">
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>Accepted by you ({req.status})</span>
+                      </div>
+                      <button
+                        onClick={() => handleDeclineRequest(req)}
+                        className="text-red-500 hover:underline text-[11px]"
+                      >
+                        Cancel Ride
+                      </button>
                     </div>
                   )}
                 </div>

@@ -319,11 +319,14 @@ export interface DriverProfile {
 }
 
 export type PickupRequestStatus = 
+  | 'searching'
   | 'requested' 
   | 'accepted' 
-  | 'declined' 
+  | 'on_the_way'
   | 'picked_up' 
+  | 'reached'
   | 'dropped' 
+  | 'declined' 
   | 'cancelled';
 
 export interface PickupRequest {
@@ -337,11 +340,17 @@ export interface PickupRequest {
   destinationCoordinates?: { lat: number; lng: number };
   hasExamToday?: boolean;
   examTime?: string;
+  latestArrivalTime?: string;
+  urgency?: 'high' | 'critical' | 'normal';
+  isBroadcast?: boolean;
   driverId: string;
   driverName: string;
   driverPhone?: string;
+  driverPhotoUrl?: string;
+  driverRating?: number;
   driverVehiclePlate?: string;
   driverVehicleType?: string;
+  driverEtaMinutes?: number;
   status: PickupRequestStatus;
   requestedAt: string;
   acceptedAt?: string;
@@ -349,6 +358,25 @@ export interface PickupRequest {
   guardianAlertSent?: boolean;
   guardianPhone?: string;
   notes?: string;
+  studentRating?: number;
+  studentFeedback?: string;
+}
+
+export type ExamStudentTripStatus = 'Assigned' | 'On the way' | 'Reached' | 'At risk';
+
+export interface ExamModeStudentStatus {
+  studentId: string;
+  studentName: string;
+  villageName: string;
+  examCenterName: string;
+  examTime: string;
+  latestArrivalTime: string;
+  leaveByTime: string;
+  timeRemainingText: string;
+  status: ExamStudentTripStatus;
+  allocatedTransportName: string;
+  driverContact?: string;
+  isLateRisk: boolean;
 }
 
 export interface DriverReport {
