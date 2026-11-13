@@ -105,3 +105,4 @@ export interface AllocationResult {
   timestamp: string;
   isConfirmed: boolean;
 }
+

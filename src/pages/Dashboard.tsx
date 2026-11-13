@@ -272,3 +272,4 @@ export const Dashboard: React.FC<Props> = ({ navigate }) => {
     </div>
   );
 };
+

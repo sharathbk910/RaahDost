@@ -7,10 +7,12 @@ import {
   ShieldCheck, 
   LifeBuoy, 
   Home, 
-  ChevronRight,
   RefreshCw,
-  ExternalLink
+  LogOut,
+  User as UserIcon,
+  LogIn
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 interface NavbarProps {
   currentRoute: string;
@@ -19,6 +21,8 @@ interface NavbarProps {
 }
 
 export const TopNavbar: React.FC<NavbarProps> = ({ currentRoute, navigate, onResetDemo }) => {
+  const { user, signOut } = useAuth();
+
   return (
     <header className="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -40,19 +44,59 @@ export const TopNavbar: React.FC<NavbarProps> = ({ currentRoute, navigate, onRes
           </div>
         </div>
 
-        {/* Demo Mode Badge and Quick Switch */}
+        {/* User Auth Info & Quick Controls */}
         <div className="flex items-center space-x-3">
-          <div className="hidden md:flex items-center bg-slate-800/80 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-300">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse mr-2"></span>
-            Demo Sandbox Active
-          </div>
+          {user ? (
+            <div className="flex items-center space-x-3">
+              <div 
+                onClick={() => navigate('/profile')}
+                className="flex items-center space-x-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl px-2.5 py-1.5 cursor-pointer transition-colors"
+              >
+                <img
+                  src={user.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60&auto=format&fit=crop&q=80'}
+                  alt="avatar"
+                  className="w-6 h-6 rounded-lg object-cover"
+                />
+                <div className="hidden sm:block text-left">
+                  <div className="text-xs font-bold leading-none text-white truncate max-w-[120px]">
+                    {user.fullName}
+                  </div>
+                  <span className={`text-[9px] uppercase font-black leading-none ${
+                    user.role === 'admin' ? 'text-amber-400' : user.role === 'operator' ? 'text-blue-400' : 'text-emerald-400'
+                  }`}>
+                    {user.role}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  signOut();
+                  navigate('/');
+                }}
+                title="Sign Out"
+                className="p-2 rounded-xl bg-slate-800 hover:bg-red-950/40 text-slate-400 hover:text-red-400 border border-slate-700 transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => navigate('/login')}
+              className="px-3.5 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs flex items-center space-x-1.5 shadow-sm"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Sign In</span>
+            </button>
+          )}
+
           <button
             onClick={onResetDemo}
             title="Reset sandbox data to initial 30-student emergency state"
             className="flex items-center space-x-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors"
           >
             <RefreshCw className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Reset Demo</span>
+            <span className="hidden sm:inline">Reset Sandbox</span>
           </button>
         </div>
       </div>
@@ -61,13 +105,16 @@ export const TopNavbar: React.FC<NavbarProps> = ({ currentRoute, navigate, onRes
 };
 
 export const Sidebar: React.FC<{ currentRoute: string; navigate: (route: string) => void }> = ({ currentRoute, navigate }) => {
+  const { user } = useAuth();
+
   const navItems = [
     { id: '/', label: 'Overview & Mission', icon: Home },
-    { id: '/dashboard', label: 'Admin Dashboard', icon: ShieldCheck, badge: 'Live' },
-    { id: '/rescue', label: 'ROUTE RESCUE', icon: LifeBuoy, highlight: true },
-    { id: '/disruptions', label: 'Disruption Manager', icon: AlertTriangle },
-    { id: '/vehicles', label: 'Vehicle Network', icon: Car },
+    { id: '/dashboard', label: 'Admin Dashboard', icon: ShieldCheck, badge: 'Live', minRole: 'admin' },
+    { id: '/rescue', label: 'ROUTE RESCUE', icon: LifeBuoy, highlight: true, minRole: 'admin' },
+    { id: '/disruptions', label: 'Disruption Manager', icon: AlertTriangle, minRole: 'operator' },
+    { id: '/vehicles', label: 'Vehicle Network', icon: Car, minRole: 'operator' },
     { id: '/student', label: 'Student Portal', icon: Users },
+    { id: '/profile', label: 'User Profile', icon: UserIcon },
   ];
 
   return (
@@ -112,14 +159,19 @@ export const Sidebar: React.FC<{ currentRoute: string; navigate: (route: string)
         })}
       </div>
 
-      {/* Demonstration notice */}
+      {/* Role Indicator footer */}
       <div className="mt-8 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-2">
-        <div className="flex items-center space-x-1.5 font-bold text-slate-800">
-          <span className="w-2 h-2 rounded-full bg-brand-500"></span>
-          <span>Evaluation Environment</span>
+        <div className="flex items-center justify-between font-bold text-slate-800">
+          <span className="flex items-center space-x-1.5">
+            <span className="w-2 h-2 rounded-full bg-brand-500"></span>
+            <span>Current Session:</span>
+          </span>
+          <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded bg-brand-100 text-brand-800">
+            {user?.role || 'Guest'}
+          </span>
         </div>
         <p className="text-[11px] leading-relaxed text-slate-500">
-          Demonstrating a 30-student route disruption recovery with deterministic vehicle matching.
+          {user?.fullName} ({user?.email})
         </p>
       </div>
     </aside>

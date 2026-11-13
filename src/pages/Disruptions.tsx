@@ -247,3 +247,4 @@ export const Disruptions: React.FC<Props> = ({ navigate }) => {
     </div>
   );
 };
+

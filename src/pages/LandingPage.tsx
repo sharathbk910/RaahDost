@@ -132,3 +132,4 @@ export const LandingPage: React.FC<Props> = ({ navigate }) => {
     </div>
   );
 };
+

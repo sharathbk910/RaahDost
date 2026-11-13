@@ -110,3 +110,4 @@ export const INITIAL_DISRUPTION: Disruption = {
   startingVillageId: 'vil-1',
   destinationId: 'inst-1'
 };
+
