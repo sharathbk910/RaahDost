@@ -40,11 +40,15 @@ interface Props {
 }
 
 export const StudentPortal: React.FC<Props> = ({ navigate }) => {
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
   const [activeTab, setActiveTab] = useState<'home' | 'map' | 'help' | 'profile'>('home');
   const [language, setLanguage] = useState<SupportedLanguage>('en');
   const [showTour, setShowTour] = useState(false);
-  const [isExamModeActive, setIsExamModeActive] = useState<boolean>(true); // Default focused high-priority exam mode
+
+  // Synchronized Single Source of Truth for Exam Mode
+  const initialExamSettings = db.getExamModeSettings();
+  const [isExamModeActive, setIsExamModeActive] = useState<boolean>(initialExamSettings.isActive);
+  const [examTime, setExamTime] = useState(initialExamSettings.examTime || user?.examTime || '10:00 AM');
 
   // Real-time reactive data from dataStore
   const [buses, setBuses] = useState<Vehicle[]>([]);
@@ -53,9 +57,17 @@ export const StudentPortal: React.FC<Props> = ({ navigate }) => {
   
   // Student State
   const [hasExamToday, setHasExamToday] = useState<boolean>(user?.hasExamToday !== undefined ? user.hasExamToday : true);
-  const [examTime, setExamTime] = useState(user?.examTime || '10:30 AM');
   const [pickupRequestedDriverId, setPickupRequestedDriverId] = useState<string | null>(null);
   const [selectedTrackedBus, setSelectedTrackedBus] = useState<Vehicle | null>(null);
+
+  // Journey Request State (Problem 2)
+  const studentVillage = user?.villageName || 'Mulki';
+  const studentCollege = user?.institutionName || 'Government Polytechnic College, Mangalore (Kadri Hills)';
+  const [journeyFrom, setJourneyFrom] = useState(`${studentVillage} Bus Stand`);
+  const [journeyTo, setJourneyTo] = useState(studentCollege);
+  const [journeyDepartureTime, setJourneyDepartureTime] = useState('07:25 AM');
+  const [journeyNotice, setJourneyNotice] = useState<string | null>(null);
+  const [isSubmittingJourney, setIsSubmittingJourney] = useState(false);
 
   // Help Issue Picker State
   const [selectedIssue, setSelectedIssue] = useState<string | null>('Bus broke down');
@@ -78,9 +90,13 @@ export const StudentPortal: React.FC<Props> = ({ navigate }) => {
       setBuses(db.getVehicles());
       setAvailableDrivers(db.getAvailableDriversForStudents());
       setNotifications(db.getNotifications(user?.id));
-      if (user?.id) {
-        setMyPickupRequests(db.getRequestsForStudent(user.id));
-      }
+
+      const studentId = user?.id || 'demo-student-1';
+      setMyPickupRequests(db.getRequestsForStudent(studentId));
+
+      const settings = db.getExamModeSettings();
+      setExamTime(settings.examTime);
+      setIsExamModeActive(settings.isActive);
     };
 
     refreshData();
@@ -88,9 +104,42 @@ export const StudentPortal: React.FC<Props> = ({ navigate }) => {
     return () => unsubscribe();
   }, [user]);
 
+  // Submit Journey Request
+  const handleSubmitJourney = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmittingJourney(true);
+
+    const studentId = user?.id || 'demo-student-1';
+    const studentName = user?.fullName || 'Aarav Sharma';
+
+    const res = db.createStudentJourneyRequest({
+      studentId,
+      studentName,
+      studentPhone: user?.phone || '+91 98450 33001',
+      pickupLocationName: journeyFrom,
+      destinationName: journeyTo,
+      departureTime: journeyDepartureTime,
+      hasExamToday: isExamModeActive || hasExamToday,
+      examTime: (isExamModeActive || hasExamToday) ? examTime : undefined,
+      urgency: (isExamModeActive || hasExamToday) ? 'critical' : 'normal',
+      guardianPhone: user?.guardianPhone,
+      notes: (isExamModeActive || hasExamToday) ? `⚡ EXAM PRIORITY: Exam starts at ${examTime}` : 'Student commute'
+    });
+
+    setIsSubmittingJourney(false);
+    if (!res.success) {
+      setJourneyNotice(res.error || 'You already have an active journey in progress.');
+    } else {
+      setJourneyNotice('✓ Transport request submitted! Searching for matching verified drivers...');
+    }
+    setTimeout(() => setJourneyNotice(null), 5000);
+  };
+
+  const myActiveJourney = myPickupRequests.find(
+    r => r.status !== 'dropped' && r.status !== 'reached' && r.status !== 'cancelled'
+  );
+
   // Determine student's location & closest bus stop
-  const studentVillage = user?.villageName || 'Mulki';
-  const studentCollege = user?.institutionName || 'Government Polytechnic College Mangalore (Kadri Hills)';
   const studentCoords = { lat: 13.0906, lng: 74.7925, name: `${studentVillage} Bus Stand` };
 
   // Check if student's primary bus has a disruption
@@ -304,7 +353,10 @@ export const StudentPortal: React.FC<Props> = ({ navigate }) => {
                     <span>Edit Exam</span>
                   </button>
                   <button
-                    onClick={() => setIsExamModeActive(true)}
+                    onClick={() => {
+                      db.saveExamModeSettings({ isActive: true, examTime });
+                      setIsExamModeActive(true);
+                    }}
                     className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-md whitespace-nowrap"
                   >
                     Turn On Exam Mode
@@ -357,7 +409,12 @@ export const StudentPortal: React.FC<Props> = ({ navigate }) => {
                 <input
                   type="text"
                   value={examTime}
-                  onChange={(e) => setExamTime(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setExamTime(val);
+                    db.saveExamModeSettings({ examTime: val });
+                    updateProfile({ examTime: val });
+                  }}
                   className="w-20 px-2 py-1 text-xs font-bold border border-amber-300 rounded-lg text-center bg-white"
                   title="Exam Start Time"
                 />
@@ -369,6 +426,243 @@ export const StudentPortal: React.FC<Props> = ({ navigate }) => {
                 className="w-5 h-5 accent-emerald-600 cursor-pointer"
               />
             </div>
+          </div>
+
+          {/* ======================================================== */}
+          {/* JOURNEY REQUEST & PICKUP TRACKER (PROBLEM 2) */}
+          {/* ======================================================== */}
+          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-md space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-black">
+                  <Navigation className="w-4 h-4 text-emerald-700" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-black text-slate-900">Plan Journey & Request Pickup</h4>
+                  <p className="text-[11px] text-slate-500">Book a seat with verified community drivers traveling your way</p>
+                </div>
+              </div>
+              {myActiveJourney && (
+                <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full border ${
+                  myActiveJourney.status === 'searching' 
+                    ? 'bg-amber-50 text-amber-800 border-amber-300 animate-pulse'
+                    : 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                }`}>
+                  {myActiveJourney.status === 'searching' ? 'Searching...' : 'Driver Confirmed'}
+                </span>
+              )}
+            </div>
+
+            {journeyNotice && (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl text-xs font-bold animate-fade-in flex items-center space-x-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                <span>{journeyNotice}</span>
+              </div>
+            )}
+
+            {/* Datalists for Suggestions */}
+            <datalist id="registered-pickup-points">
+              <option value="Mulki Bus Stand" />
+              <option value="Surathkal NITK Junction" />
+              <option value="Moodbidri Bus Terminal" />
+              <option value="Bajpe Airport Circle" />
+              <option value="Kateel Temple Square" />
+              <option value="Kinnigoli Main Stop" />
+              <option value="Farangipete" />
+              <option value="Vamanjoor Junction" />
+              <option value="Ullal Bridge Stop" />
+              <option value="Thokkottu Circle" />
+            </datalist>
+
+            <datalist id="registered-destinations">
+              <option value="Government Polytechnic College, Mangalore (Kadri Hills)" />
+              <option value="Mangalore University (Konaje)" />
+              <option value="St. Joseph Engineering College (Vamanjoor)" />
+              <option value="Canara Engineering College (Benjanapadavu)" />
+              <option value="National Institute of Technology Karnataka (Surathkal)" />
+              <option value="University College Mangaluru (Hampankatta)" />
+              <option value="Government PU College for Women (Balmatta)" />
+              <option value="Sharada PU College (Kodialbail)" />
+            </datalist>
+
+            {myActiveJourney ? (
+              /* ACTIVE TRIP STATUS DISPLAY */
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-slate-700">
+                    From <strong>{myActiveJourney.pickupLocationName}</strong> ➔ <strong>{myActiveJourney.destinationName}</strong>
+                  </span>
+                  <span className="text-slate-500 font-mono">Trip #{myActiveJourney.id.slice(-5)}</span>
+                </div>
+
+                <div className="text-xs text-slate-600 flex items-center space-x-2">
+                  <Clock className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Desired Departure: <strong>{myActiveJourney.departureTime || '07:25 AM'}</strong></span>
+                  {(myActiveJourney.hasExamToday || isExamModeActive) && (
+                    <span className="text-[10px] bg-amber-100 text-amber-900 font-black px-1.5 py-0.5 rounded">
+                      ⚡ Exam Priority ({myActiveJourney.examTime || examTime})
+                    </span>
+                  )}
+                </div>
+
+                {/* If Searching */}
+                {myActiveJourney.status === 'searching' && (
+                  <div className="p-3.5 bg-amber-50 rounded-xl border border-amber-200 text-center space-y-2">
+                    <div className="flex items-center justify-center space-x-2 text-xs font-bold text-amber-900">
+                      <span className="w-2.5 h-2.5 bg-amber-500 rounded-full animate-ping" />
+                      <span>Broadcasting to nearby verified drivers heading towards your institution...</span>
+                    </div>
+                    {availableDrivers.length === 0 && (
+                      <p className="text-[11px] text-amber-800 font-medium">
+                        No matching driver is currently available on this route. Scheduled government buses are running below.
+                      </p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => db.cancelPickupRequest(myActiveJourney.id, 'student')}
+                      className="px-3 py-1 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-lg border border-slate-200 shadow-xs"
+                    >
+                      Cancel Request
+                    </button>
+                  </div>
+                )}
+
+                {/* If Assigned / In Progress */}
+                {myActiveJourney.status !== 'searching' && (
+                  <div className="space-y-2.5 pt-1">
+                    <div className="flex items-center space-x-3 p-3 bg-white rounded-xl border border-emerald-200 shadow-xs">
+                      <img
+                        src={myActiveJourney.driverPhotoUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80'}
+                        alt={myActiveJourney.driverName}
+                        className="w-11 h-11 rounded-xl object-cover border-2 border-emerald-500"
+                      />
+                      <div className="space-y-0.5">
+                        <div className="flex items-center space-x-1.5">
+                          <strong className="text-xs font-black text-slate-900">{myActiveJourney.driverName}</strong>
+                          <span className="text-[10px] bg-amber-100 text-amber-900 font-bold px-1 rounded">
+                            ★ {myActiveJourney.driverRating || 4.9}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-600">
+                          {myActiveJourney.driverVehicleType} • <strong className="font-mono text-emerald-800">{myActiveJourney.driverVehiclePlate || 'KA-19-ME-402'}</strong>
+                        </p>
+                        {myActiveJourney.driverPhone && (
+                          <a href={`tel:${myActiveJourney.driverPhone}`} className="text-[11px] text-emerald-700 font-bold hover:underline">
+                            Call: {myActiveJourney.driverPhone}
+                          </a>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Driver Trip Status Message */}
+                    <div className="p-3 bg-teal-50 border border-teal-200 rounded-xl flex items-center justify-between text-xs">
+                      <div className="flex items-center space-x-2">
+                        <span className="w-2 h-2 rounded-full bg-teal-600 animate-pulse" />
+                        <span className="font-bold text-teal-900">
+                          {myActiveJourney.lastStatusUpdateMessage || (
+                            myActiveJourney.status === 'on_the_way' ? 'Your driver is on the way' :
+                            myActiveJourney.status === 'near_pickup' ? 'Driver approaching your pickup point' :
+                            myActiveJourney.status === 'picked_up' ? 'You have been picked up' :
+                            myActiveJourney.status === 'preparing' ? 'Preparing for Departure' :
+                            myActiveJourney.status === 'en_route_destination' ? 'On the way to destination' :
+                            myActiveJourney.status === 'reached' || myActiveJourney.status === 'dropped' ? 'Trip Completed ✓' :
+                            myActiveJourney.status === 'delayed' ? '⚠️ Driver Delayed' : 'Driver Confirmed'
+                          )}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-teal-700 font-mono">
+                        {myActiveJourney.statusUpdatedAt ? new Date(myActiveJourney.statusUpdatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Live'}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-end pt-1">
+                      <button
+                        type="button"
+                        onClick={() => db.cancelPickupRequest(myActiveJourney.id, 'student')}
+                        className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-600 text-xs font-bold rounded-lg border border-slate-200"
+                      >
+                        Cancel Ride
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* JOURNEY REQUEST INPUT FORM */
+              <form onSubmit={handleSubmitJourney} className="space-y-3.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      From (Pickup Location / Stop)
+                    </label>
+                    <input
+                      type="text"
+                      list="registered-pickup-points"
+                      required
+                      placeholder="e.g. Mulki Bus Stand"
+                      value={journeyFrom}
+                      onChange={(e) => setJourneyFrom(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      To (School, College, or Destination)
+                    </label>
+                    <input
+                      type="text"
+                      list="registered-destinations"
+                      required
+                      placeholder="e.g. Government Polytechnic College, Mangalore"
+                      value={journeyTo}
+                      onChange={(e) => setJourneyTo(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs items-center">
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Desired Departure Time
+                    </label>
+                    <select
+                      value={journeyDepartureTime}
+                      onChange={(e) => setJourneyDepartureTime(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-300 font-bold bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    >
+                      <option value="07:15 AM">07:15 AM (Early Morning Wave)</option>
+                      <option value="07:25 AM">07:25 AM (Recommended for Exams)</option>
+                      <option value="07:45 AM">07:45 AM</option>
+                      <option value="08:00 AM">08:00 AM</option>
+                      <option value="08:30 AM">08:30 AM</option>
+                    </select>
+                  </div>
+
+                  <div className="pt-4 sm:pt-5">
+                    {(isExamModeActive || hasExamToday) ? (
+                      <span className="text-[11px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-3 py-2 rounded-xl block text-center">
+                        ⚡ Exam Priority Attached (Exam at {examTime})
+                      </span>
+                    ) : (
+                      <span className="text-[11px] font-medium text-slate-500 bg-slate-100 px-3 py-2 rounded-xl block text-center">
+                        Regular Student Commute
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmittingJourney}
+                  className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-md transition-all active:scale-98 flex items-center justify-center space-x-1.5"
+                >
+                  <Navigation className="w-4 h-4" />
+                  <span>{isSubmittingJourney ? 'Submitting...' : 'Submit Transport Request'}</span>
+                </button>
+              </form>
+            )}
           </div>
 
           {/* Status Card */}

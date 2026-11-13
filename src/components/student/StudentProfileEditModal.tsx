@@ -236,3 +236,4 @@ export const StudentProfileEditModal: React.FC<Props> = ({ isOpen, onClose, onSa
     </div>
   );
 };
+

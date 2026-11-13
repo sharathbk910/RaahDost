@@ -463,3 +463,24 @@ Ensure seamless zero-friction production testing on Vercel (`https://raahdost.ve
 2. **Graceful Auth Fallback:** If Supabase OAuth provider keys are unconfigured, automatically fall back to demo profiles so users never encounter blocking error alerts.
 3. **SPA Deep-Linking:** Configure `vercel.json` rewrites to support direct deep-linking across `/student`, `/driver`, `/dashboard`, and `/crisis`.
 4. **Unit Tests & Build:** Maintain clean TypeScript compilation (`tsc -b && vite build`) and 100% pass rates across algorithmic test suites.
+
+__________________________________________________________________________________________________________________________________________
+
+## 10. REAL-TIME TRIP LIFECYCLE, EXAM TIME SYNC, AND BIDIRECTIONAL PORTAL CONNECTIVITY PROMPT
+
+Execute precision functional fixes resolving sync, journey creation, and driver-student lifecycle connectivity:
+1. **Exam Time Single Source of Truth:**
+   - Eliminate hardcoded default exam times (`10:15 AM`, `10:30 AM`). Store dynamic exam time in `dataStore.ts` under persistent storage.
+   - Dynamically compute dynamic leave-by time (60 min buffer prior to arrival), arrival deadline (15 min safety buffer before exam start), and live countdown.
+   - Synchronize bidirectionally across Student Portal home screen, Exam Mode view, and edit modals across page refreshes.
+2. **Student Journey Request & Active Pickup Tracker:**
+   - Dedicated "Plan Journey & Request Pickup" section on Student Portal Home tab with From (pickup shelter), To (destination institution), and departure time selector with datalist suggestions.
+   - Exam priority badge and exam start time attached to request when Exam Mode is active.
+   - Prevention of duplicate active journey requests.
+   - Active journey card rendering live driver details (driver name, vehicle, phone number), status messages, and last-updated timestamps.
+3. **Driver Trip Status Lifecycle & Dynamic Destination Sync:**
+   - Status control with 9 lifecycle stages: `Trip Accepted`, `Preparing for Departure`, `On the Way`, `Near Pickup Point`, `Student Picked Up`, `On the Way to Destination`, `Reached Destination`, `Delayed`, and `Trip Cancelled`.
+   - Driver receives immediate confirmation ("Saved ✓") with localized timestamp.
+   - Student receives instant live status messages without page refresh via shared reactive data store and BroadcastChannel sync.
+   - Driver's active destination dynamically synchronizes to student's destination upon acceptance.
+   - Clean seat management with atomic decrements on accept and automatic replenishment upon trip completion or cancellation.

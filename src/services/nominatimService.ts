@@ -194,3 +194,4 @@ function getFallbackLocalPlaces(query: string): GeocodingResult[] {
   const q = query.toLowerCase();
   return localHubs.filter(h => h.shortName.toLowerCase().includes(q) || h.displayName.toLowerCase().includes(q));
 }
+

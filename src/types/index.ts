@@ -322,10 +322,14 @@ export type PickupRequestStatus =
   | 'searching'
   | 'requested' 
   | 'accepted' 
+  | 'preparing'
   | 'on_the_way'
+  | 'near_pickup'
   | 'picked_up' 
+  | 'en_route_destination'
   | 'reached'
   | 'dropped' 
+  | 'delayed'
   | 'declined' 
   | 'cancelled';
 
@@ -340,6 +344,7 @@ export interface PickupRequest {
   pickupCoordinates?: { lat: number; lng: number };
   destinationName: string;
   destinationCoordinates?: { lat: number; lng: number };
+  departureTime?: string;
   hasExamToday?: boolean;
   examTime?: string;
   latestArrivalTime?: string;
@@ -357,6 +362,9 @@ export interface PickupRequest {
   requestedAt: string;
   acceptedAt?: string;
   completedAt?: string;
+  updatedAt?: string;
+  statusUpdatedAt?: string;
+  lastStatusUpdateMessage?: string;
   guardianAlertSent?: boolean;
   guardianPhone?: string;
   notes?: string;

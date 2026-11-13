@@ -36,6 +36,14 @@ export const ExamModeEditModal: React.FC<Props> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Persist to central single source of truth in dataStore
+    db.saveExamModeSettings({
+      examTime: time,
+      examCenter: center,
+      latestArrival: arrival,
+      isActive
+    });
+
     onSaveExamMode({
       examTime: time,
       examCenter: center,
@@ -177,3 +185,4 @@ export const ExamModeEditModal: React.FC<Props> = ({
     </div>
   );
 };
+

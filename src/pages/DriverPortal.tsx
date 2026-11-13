@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../services/dataStore';
-import { DriverProfile, PickupRequest, Vehicle } from '../types';
+import { DriverProfile, PickupRequest, Vehicle, PickupRequestStatus } from '../types';
 import { FirstTimeTourModal } from '../components/common/FirstTimeTourModal';
 import { DriverRequestModal } from '../components/driver/DriverRequestModal';
 import { DriverProfileEditModal } from '../components/driver/DriverProfileEditModal';
@@ -56,6 +56,8 @@ export const DriverPortal: React.FC<Props> = ({ navigate }) => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [ignoreCount, setIgnoreCount] = useState<number>(0);
   const [pausedUntil, setPausedUntil] = useState<number | null>(null);
+  const [statusSaved, setStatusSaved] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<PickupRequestStatus>('accepted');
 
   // Subscribe to real-time database store updates
   useEffect(() => {
@@ -76,6 +78,22 @@ export const DriverPortal: React.FC<Props> = ({ navigate }) => {
         }
         setIsBusDriver(matched.driverType === 'bus_driver');
         setIncomingRequests(db.getRequestsForDriver(matched.id));
+
+        // Restore active accepted trip if driver already has one in progress
+        const activeTrip = db.getPickupRequests().find(
+          r => r.driverId === matched.id && 
+               r.status !== 'dropped' && 
+               r.status !== 'reached' && 
+               r.status !== 'cancelled'
+        );
+        if (activeTrip) {
+          setAcceptedRequest(activeTrip);
+          setSelectedStatus(activeTrip.status);
+          setDestinationPlace(activeTrip.destinationName);
+          setStartPlace(activeTrip.pickupLocationName);
+        } else {
+          setAcceptedRequest(null);
+        }
       }
       setBuses(db.getVehicles());
     };
@@ -159,7 +177,38 @@ export const DriverPortal: React.FC<Props> = ({ navigate }) => {
     }
     const acc = res.request || { ...req, status: 'accepted' };
     setAcceptedRequest(acc);
+    setSelectedStatus('accepted');
     setActiveModalRequest(acc);
+    setDestinationPlace(acc.destinationName);
+    setStartPlace(acc.pickupLocationName);
+  };
+
+  // Update Driver Trip Status with Real-time Student Messaging
+  const handleUpdateTripStatus = (newStatus: PickupRequestStatus) => {
+    if (!driver || !acceptedRequest) return;
+    const res = db.updateDriverTripStatus(acceptedRequest.id, newStatus, driver.id);
+    if (res.success && res.request) {
+      setAcceptedRequest(res.request);
+      setStatusSaved(true);
+      setTimeout(() => setStatusSaved(false), 2500);
+
+      if (newStatus === 'dropped' || newStatus === 'reached' || newStatus === 'cancelled') {
+        setTimeout(() => {
+          setAcceptedRequest(null);
+          setActiveModalRequest(null);
+        }, 1500);
+      }
+    } else if (res.error) {
+      alert(res.error);
+    }
+  };
+
+  // Update Trip Destination Dynamically
+  const handleUpdateTripDestination = () => {
+    if (!driver || !acceptedRequest) return;
+    db.updateTripDestination(acceptedRequest.id, destinationPlace, driver.id);
+    setStatusSaved(true);
+    setTimeout(() => setStatusSaved(false), 2500);
   };
 
   // Decline or Cancel Pickup Request
@@ -448,55 +497,103 @@ export const DriverPortal: React.FC<Props> = ({ navigate }) => {
 
           {/* 3. ACTIVE ACCEPTED TRIP TRACKER */}
           {acceptedRequest && (
-            <div className="p-5 bg-teal-50 border-2 border-teal-300 rounded-3xl shadow-md space-y-3">
+            <div className="p-5 bg-teal-50 border-2 border-teal-300 rounded-3xl shadow-md space-y-3.5">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black uppercase text-teal-900 bg-teal-200/80 px-2 py-0.5 rounded">
+                <span className="text-[10px] font-black uppercase text-teal-900 bg-teal-200/80 px-2.5 py-1 rounded-full">
                   Active Passenger Trip
                 </span>
                 <span className="text-xs font-bold text-teal-800">
-                  Status: <strong>{acceptedRequest.status}</strong>
+                  Status: <strong className="uppercase">{acceptedRequest.status.replace(/_/g, ' ')}</strong>
                 </span>
               </div>
 
-              <div>
+              <div className="bg-white/80 p-3.5 rounded-2xl border border-teal-200/70 space-y-1">
                 <h4 className="text-sm font-black text-slate-900">{acceptedRequest.studentName}</h4>
                 <p className="text-xs text-slate-600">
                   Pickup: <strong>{acceptedRequest.pickupLocationName}</strong>
                 </p>
                 <p className="text-xs text-slate-600">
-                  Drop: <strong>{acceptedRequest.destinationName}</strong>
+                  Destination: <strong>{acceptedRequest.destinationName}</strong>
                 </p>
                 {acceptedRequest.hasExamToday && (
                   <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded mt-1 inline-block">
-                    ⚡ Semester Exam at {acceptedRequest.examTime || '10:30 AM'}
+                    ⚡ Semester Exam at {acceptedRequest.examTime || '10:00 AM'} (Priority Student)
                   </span>
+                )}
+                {acceptedRequest.lastStatusUpdateMessage && (
+                  <div className="text-[11px] text-teal-900 bg-teal-100/80 px-2.5 py-1.5 rounded-xl mt-2 font-medium">
+                    Broadcasted to Student: "{acceptedRequest.lastStatusUpdateMessage}"
+                  </div>
                 )}
               </div>
 
-              <div className="flex gap-2 pt-2">
-                {acceptedRequest.status === 'accepted' && (
-                  <button
-                    onClick={() => handleCompleteTripStep('picked_up')}
-                    className="flex-1 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs rounded-xl shadow-sm"
+              {/* Status Control Dropdown + Save Status */}
+              <div className="space-y-2 pt-1 border-t border-teal-200">
+                <label className="block text-xs font-bold text-slate-700">Trip Status Lifecycle</label>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={selectedStatus}
+                    onChange={(e) => setSelectedStatus(e.target.value as PickupRequestStatus)}
+                    className="flex-1 px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
                   >
-                    Mark "Picked Up"
-                  </button>
-                )}
-
-                {acceptedRequest.status === 'picked_up' && (
+                    <option value="accepted">Trip Accepted</option>
+                    <option value="preparing">Preparing for Departure</option>
+                    <option value="on_the_way">On the Way</option>
+                    <option value="near_pickup">Near Pickup Point</option>
+                    <option value="picked_up">Student Picked Up</option>
+                    <option value="en_route_destination">On the Way to Destination</option>
+                    <option value="reached">Reached Destination</option>
+                    <option value="delayed">Delayed</option>
+                    <option value="cancelled">Trip Cancelled</option>
+                  </select>
                   <button
-                    onClick={() => handleCompleteTripStep('dropped')}
-                    className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm"
+                    type="button"
+                    onClick={() => handleUpdateTripStatus(selectedStatus)}
+                    className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs rounded-xl shadow-sm transition-transform active:scale-95"
                   >
-                    Mark "Dropped at College" ✓
+                    Save Status
                   </button>
-                )}
+                </div>
 
+                {/* Feedback confirmation */}
+                {statusSaved && (
+                  <div className="flex items-center justify-between text-[11px] font-bold text-emerald-700 bg-emerald-100/90 px-2.5 py-1.5 rounded-lg animate-fade-in">
+                    <span>Saved ✓ Real-time update broadcasted to student</span>
+                    <span className="font-mono text-[10px]">
+                      {new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Dynamic Destination update */}
+              <div className="space-y-1.5 pt-1 border-t border-teal-200">
+                <label className="block text-xs font-bold text-slate-700">Dynamic Trip Destination</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={destinationPlace}
+                    onChange={(e) => setDestinationPlace(e.target.value)}
+                    className="flex-1 px-3 py-1.5 bg-white border border-slate-300 rounded-xl text-xs"
+                    placeholder="College or Destination stop"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleUpdateTripDestination}
+                    className="px-3 py-1.5 bg-white border border-teal-500 text-teal-800 hover:bg-teal-50 font-bold text-xs rounded-xl shadow-sm"
+                  >
+                    Update
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-1">
                 <button
+                  type="button"
                   onClick={() => handleDeclineRequest(acceptedRequest)}
-                  className="px-3 py-2.5 bg-white border border-slate-300 text-slate-700 font-bold text-xs rounded-xl hover:bg-slate-50"
+                  className="px-3 py-1.5 bg-white border border-red-200 text-red-600 font-bold text-xs rounded-xl hover:bg-red-50"
                 >
-                  Cancel
+                  Cancel Trip
                 </button>
               </div>
             </div>

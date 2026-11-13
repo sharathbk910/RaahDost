@@ -21,7 +21,7 @@ import {
   Check,
   Pencil
 } from 'lucide-react';
-import { db } from '../../services/dataStore';
+import { db, calculateExamTimingDetails } from '../../services/dataStore';
 import { DriverProfile, PickupRequest, Vehicle } from '../../types';
 import { UserProfile } from '../../context/AuthContext';
 import { SupportedLanguage, TRANSLATIONS } from '../common/LanguageToggle';
@@ -41,11 +41,13 @@ export const ExamModeView: React.FC<Props> = ({
   onExitExamMode,
   onTrackOnMap 
 }) => {
-  // Exam Setup state
-  const [examTime, setExamTime] = useState(user?.examTime || '10:30 AM');
-  const [examCenter, setExamCenter] = useState(user?.institutionName || 'Government Polytechnic College Mangalore (Kadri Hills)');
-  const [latestArrivalTime, setLatestArrivalTime] = useState('10:15 AM');
-  const [leaveByTime, setLeaveByTime] = useState('08:35 AM');
+  // Exam Setup state initialized from single source of truth in db
+  const initialSettings = db.getExamModeSettings();
+  const [examTime, setExamTime] = useState(initialSettings.examTime || user?.examTime || '10:00 AM');
+  const [examCenter, setExamCenter] = useState(initialSettings.examCenter || user?.institutionName || 'Government Polytechnic College Mangalore (Kadri Hills)');
+  const [latestArrivalTime, setLatestArrivalTime] = useState(initialSettings.latestArrival || '09:45 AM');
+  const [leaveByTime, setLeaveByTime] = useState(initialSettings.leaveByTime || '08:45 AM');
+  const [countdownText, setCountdownText] = useState('1h 30m');
 
   // Real-time live data
   const [availableDrivers, setAvailableDrivers] = useState<DriverProfile[]>([]);
@@ -76,6 +78,15 @@ export const ExamModeView: React.FC<Props> = ({
   // Real-time subscriber to DB
   useEffect(() => {
     const refresh = () => {
+      const settings = db.getExamModeSettings();
+      setExamTime(settings.examTime);
+      setExamCenter(settings.examCenter);
+
+      const timings = calculateExamTimingDetails(settings.examTime);
+      setLatestArrivalTime(timings.latestArrivalTime);
+      setLeaveByTime(timings.leaveByTime);
+      setCountdownText(timings.countdownText);
+
       setAvailableDrivers(db.getAvailableDriversForStudents());
       setBuses(db.getVehicles());
 
@@ -95,6 +106,19 @@ export const ExamModeView: React.FC<Props> = ({
     const unsubscribe = db.subscribe(refresh);
     return () => unsubscribe();
   }, [user]);
+
+  // Dynamic countdown timer loop updating every 10 seconds
+  useEffect(() => {
+    const updateCountdown = () => {
+      const timings = calculateExamTimingDetails(examTime);
+      setCountdownText(timings.countdownText);
+      setLatestArrivalTime(timings.latestArrivalTime);
+      setLeaveByTime(timings.leaveByTime);
+    };
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 10000);
+    return () => clearInterval(interval);
+  }, [examTime]);
 
   // Searching Timer for 3-minute search radius widening fallback
   useEffect(() => {
@@ -261,7 +285,7 @@ export const ExamModeView: React.FC<Props> = ({
               Exam Hall Countdown
             </span>
             <div className="flex items-baseline space-x-2">
-              <h2 className="text-3xl sm:text-4xl font-black text-amber-400 tracking-tight">1h 25m</h2>
+              <h2 className="text-3xl sm:text-4xl font-black text-amber-400 tracking-tight">{countdownText}</h2>
               <span className="text-xs text-slate-300 font-semibold">until {examTime} exam</span>
             </div>
             <p className="text-xs text-slate-300 mt-1">
@@ -277,7 +301,7 @@ export const ExamModeView: React.FC<Props> = ({
               Leave by <span className="text-emerald-400">{leaveByTime}</span>
             </div>
             <p className="text-[11px] text-slate-300 font-medium">
-              Guarantees arrival by {latestArrivalTime} (35-min safety buffer)
+              Guarantees arrival by {latestArrivalTime} (30-min safety buffer)
             </p>
           </div>
         </div>
@@ -390,6 +414,27 @@ export const ExamModeView: React.FC<Props> = ({
                     ETA: ~{activeRequest.driverEtaMinutes || 6} mins to {activeRequest.pickupLocationName}
                   </p>
                 </div>
+              </div>
+
+              {/* Live Real-Time Driver Status Banner */}
+              <div className="p-3 bg-teal-50 border border-teal-200 rounded-2xl flex items-center justify-between text-xs">
+                <div className="flex items-center space-x-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-teal-600 animate-pulse flex-shrink-0" />
+                  <span className="font-bold text-teal-900">
+                    {activeRequest.lastStatusUpdateMessage || (
+                      activeRequest.status === 'on_the_way' ? 'Your driver is on the way' :
+                      activeRequest.status === 'near_pickup' ? 'Driver approaching your pickup point' :
+                      activeRequest.status === 'picked_up' ? 'You have been picked up' :
+                      activeRequest.status === 'preparing' ? 'Preparing for Departure' :
+                      activeRequest.status === 'en_route_destination' ? 'On the way to destination' :
+                      activeRequest.status === 'reached' || activeRequest.status === 'dropped' ? 'Trip Completed' :
+                      activeRequest.status === 'delayed' ? '⚠️ Driver Delayed' : 'Driver Confirmed'
+                    )}
+                  </span>
+                </div>
+                <span className="text-[10px] text-teal-700 font-mono font-bold whitespace-nowrap ml-2">
+                  {activeRequest.statusUpdatedAt ? new Date(activeRequest.statusUpdatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Live'}
+                </span>
               </div>
 
               {/* Trip Controls */}

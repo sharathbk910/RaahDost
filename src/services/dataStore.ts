@@ -42,7 +42,77 @@ const STORAGE_KEYS = {
   ROADS: 'raahdost_roads',
   AUDIT_LOGS: 'raahdost_audit_logs',
   NOTIFICATIONS: 'raahdost_notifications',
+  EXAM_MODE_SETTINGS: 'raahdost_exam_mode_settings',
 };
+
+export interface ExamModeSettings {
+  examTime: string;
+  examCenter: string;
+  latestArrival: string;
+  leaveByTime: string;
+  isActive: boolean;
+}
+
+export function parseTimeToMinutes(timeStr?: string): number {
+  if (!timeStr) return 10 * 60; // default 10:00 AM (600 mins)
+  const clean = timeStr.trim().toUpperCase();
+  const match = clean.match(/(\d+):(\d+)\s*(AM|PM)?/);
+  if (!match) return 10 * 60;
+  let hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
+  const modifier = match[3];
+
+  if (modifier === 'PM' && hours < 12) hours += 12;
+  if (modifier === 'AM' && hours === 12) hours = 0;
+  return hours * 60 + minutes;
+}
+
+export function formatMinutesToTime(totalMinutes: number): string {
+  let mins = totalMinutes % (24 * 60);
+  if (mins < 0) mins += 24 * 60;
+  const hours24 = Math.floor(mins / 60);
+  const minutes = mins % 60;
+  const modifier = hours24 >= 12 ? 'PM' : 'AM';
+  let hours12 = hours24 % 12;
+  if (hours12 === 0) hours12 = 12;
+  return `${hours12.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${modifier}`;
+}
+
+export function calculateExamTimingDetails(examTime?: string) {
+  const safeTime = (examTime && examTime.trim()) ? examTime.trim() : '10:00 AM';
+  const examMins = parseTimeToMinutes(safeTime);
+  // 15 mins before exam for hall gate cutoff
+  const latestArrivalMins = examMins - 15;
+  // 60 mins before arrival (45 min transit + 15 min buffer)
+  const leaveByMins = latestArrivalMins - 60;
+
+  const now = new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+  let diff = examMins - nowMinutes;
+  let countdownText = '';
+  if (diff > 0) {
+    const h = Math.floor(diff / 60);
+    const m = diff % 60;
+    countdownText = h > 0 ? `${h}h ${m}m` : `${m}m`;
+  } else if (diff >= -120) {
+    countdownText = 'Exam in Session';
+  } else {
+    // If exam time is scheduled for tomorrow or relative baseline
+    const fullDayDiff = (24 * 60) + diff;
+    const h = Math.floor(fullDayDiff / 60);
+    const m = fullDayDiff % 60;
+    countdownText = `${h}h ${m}m`;
+  }
+
+  return {
+    examTimeFormatted: formatMinutesToTime(examMins),
+    latestArrivalTime: formatMinutesToTime(latestArrivalMins),
+    leaveByTime: formatMinutesToTime(leaveByMins),
+    countdownText: countdownText || '1h 30m',
+    bufferMinutes: 30
+  };
+}
 
 class LocalDataStore {
   private listeners: Set<() => void> = new Set();
@@ -567,12 +637,173 @@ class LocalDataStore {
     current.driverVehicleType = driver.vehicleType;
     current.driverEtaMinutes = 6;
     current.acceptedAt = new Date().toISOString();
+    current.statusUpdatedAt = new Date().toISOString();
+    current.updatedAt = new Date().toISOString();
+    current.lastStatusUpdateMessage = 'Driver Confirmed — Trip Accepted';
+
+    // Update driver active destination dynamically to match student's destination
+    if (driver.activeRoute) {
+      this.updateDriver(driver.id, {
+        activeRoute: {
+          ...driver.activeRoute,
+          startLocation: current.pickupLocationName,
+          destinationLocation: current.destinationName
+        }
+      });
+    }
 
     // Deduct driver seat
     this.adjustDriverSeats(driver.id, -1);
     this.savePickupRequests(list);
 
     return { success: true, request: current };
+  }
+
+  // Update driver trip status with human-readable messaging & timestamp
+  updateDriverTripStatus(
+    requestId: string, 
+    status: PickupRequestStatus, 
+    driverId: string, 
+    customNote?: string
+  ): { success: boolean; request?: PickupRequest; error?: string } {
+    const list = this.getPickupRequests();
+    const index = list.findIndex(r => r.id === requestId);
+    if (index === -1) {
+      return { success: false, error: 'Pickup request not found.' };
+    }
+
+    const current = list[index];
+    if (current.driverId !== driverId && current.driverId !== 'broadcast') {
+      return { success: false, error: 'Unauthorized: This trip belongs to another driver.' };
+    }
+
+    const STATUS_MESSAGES: Record<PickupRequestStatus, string> = {
+      searching: 'Searching for nearest verified driver...',
+      requested: 'Ride request received',
+      accepted: 'Driver Confirmed',
+      preparing: 'Preparing for Departure',
+      on_the_way: 'Your driver is on the way',
+      near_pickup: 'Driver approaching your pickup point',
+      picked_up: 'You have been picked up',
+      en_route_destination: 'On the way to destination',
+      reached: 'Trip Completed',
+      dropped: 'Trip Completed',
+      delayed: '⚠️ Driver Delayed — Detour or heavy traffic',
+      declined: 'Trip request declined',
+      cancelled: 'Trip Cancelled'
+    };
+
+    current.status = status;
+    current.lastStatusUpdateMessage = customNote || STATUS_MESSAGES[status] || `Trip status: ${status}`;
+    current.statusUpdatedAt = new Date().toISOString();
+    current.updatedAt = new Date().toISOString();
+
+    if (status === 'accepted') {
+      current.acceptedAt = new Date().toISOString();
+    } else if (status === 'reached' || status === 'dropped') {
+      current.completedAt = new Date().toISOString();
+      const driver = this.getDriverById(driverId);
+      if (driver) {
+        this.updateDriver(driverId, {
+          studentsHelpedCount: (driver.studentsHelpedCount || 0) + 1,
+          tripsCompleted: (driver.tripsCompleted || 0) + 1
+        });
+      }
+    } else if (status === 'cancelled') {
+      this.adjustDriverSeats(driverId, 1);
+    }
+
+    this.savePickupRequests(list);
+    return { success: true, request: current };
+  }
+
+  // Update trip destination dynamically
+  updateTripDestination(
+    requestId: string, 
+    newDestination: string, 
+    driverId: string
+  ): { success: boolean; request?: PickupRequest } {
+    const list = this.getPickupRequests();
+    const index = list.findIndex(r => r.id === requestId);
+    if (index === -1) return { success: false };
+
+    const current = list[index];
+    current.destinationName = newDestination;
+    current.updatedAt = new Date().toISOString();
+    current.lastStatusUpdateMessage = `Destination updated to ${newDestination}`;
+
+    const driver = this.getDriverById(driverId);
+    if (driver && driver.activeRoute) {
+      this.updateDriver(driverId, {
+        activeRoute: {
+          ...driver.activeRoute,
+          destinationLocation: newDestination
+        }
+      });
+    }
+
+    this.savePickupRequests(list);
+    return { success: true, request: current };
+  }
+
+  // Create Student Journey Request with duplicate prevention
+  createStudentJourneyRequest(reqData: {
+    studentId: string;
+    studentName: string;
+    studentPhone?: string;
+    pickupLocationName: string;
+    pickupCoordinates?: { lat: number; lng: number };
+    destinationName: string;
+    destinationCoordinates?: { lat: number; lng: number };
+    departureTime?: string;
+    hasExamToday?: boolean;
+    examTime?: string;
+    latestArrivalTime?: string;
+    urgency?: 'high' | 'critical' | 'normal';
+    guardianPhone?: string;
+    notes?: string;
+  }): { success: boolean; request?: PickupRequest; error?: string } {
+    const studentRequests = this.getRequestsForStudent(reqData.studentId);
+    const activeReq = studentRequests.find(
+      r => r.status !== 'dropped' && r.status !== 'reached' && r.status !== 'cancelled'
+    );
+    if (activeReq) {
+      return { 
+        success: false, 
+        request: activeReq, 
+        error: 'You already have an active transport request in progress.' 
+      };
+    }
+
+    const newReq: PickupRequest = {
+      id: `req-${Date.now()}`,
+      studentId: reqData.studentId,
+      studentName: reqData.studentName,
+      studentPhone: reqData.studentPhone,
+      pickupLocationName: reqData.pickupLocationName,
+      pickupCoordinates: reqData.pickupCoordinates,
+      destinationName: reqData.destinationName,
+      destinationCoordinates: reqData.destinationCoordinates,
+      departureTime: reqData.departureTime || '07:25 AM',
+      hasExamToday: reqData.hasExamToday !== undefined ? reqData.hasExamToday : false,
+      examTime: reqData.examTime,
+      latestArrivalTime: reqData.latestArrivalTime,
+      urgency: reqData.urgency || (reqData.hasExamToday ? 'critical' : 'normal'),
+      isBroadcast: true,
+      driverId: 'broadcast',
+      driverName: 'Broadcasting to nearby verified drivers',
+      status: 'searching',
+      requestedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      statusUpdatedAt: new Date().toISOString(),
+      lastStatusUpdateMessage: 'Searching for nearest verified driver...',
+      guardianAlertSent: !!reqData.guardianPhone,
+      guardianPhone: reqData.guardianPhone,
+      notes: reqData.notes || (reqData.hasExamToday ? `⚡ EXAM PRIORITY: Exam at ${reqData.examTime || '10:00 AM'}` : 'Student Commute Request')
+    };
+
+    this.createPickupRequest(newReq);
+    return { success: true, request: newReq };
   }
 
   // Cancel or Re-open request
@@ -657,10 +888,66 @@ class LocalDataStore {
   }
 
   getRequestsForDriver(driverId: string): PickupRequest[] {
-    return this.getPickupRequests().filter(r => 
-      r.driverId === driverId || 
-      (r.isBroadcast && (r.status === 'searching' || r.status === 'requested'))
-    );
+    const driver = this.getDriverById(driverId);
+    return this.getPickupRequests().filter(r => {
+      // 1. Direct requests for this driver
+      if (r.driverId === driverId) return true;
+
+      // 2. Broadcast / searching requests available for this driver to accept
+      if (r.isBroadcast && (r.status === 'searching' || r.status === 'requested')) {
+        // Driver must be available and have seats free
+        if (driver && (!driver.isAvailable || driver.seatsFree <= 0)) {
+          return false;
+        }
+        return true;
+      }
+
+      return false;
+    });
+  }
+
+  // Single Source of Truth for Student Exam Mode Settings & Timings
+  getExamModeSettings(): ExamModeSettings {
+    const raw = localStorage.getItem(STORAGE_KEYS.EXAM_MODE_SETTINGS);
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        const timings = calculateExamTimingDetails(parsed.examTime || '10:00 AM');
+        return {
+          examTime: parsed.examTime || '10:00 AM',
+          examCenter: parsed.examCenter || 'Government Polytechnic College Mangalore (Kadri Hills)',
+          latestArrival: timings.latestArrivalTime,
+          leaveByTime: timings.leaveByTime,
+          isActive: parsed.isActive !== undefined ? parsed.isActive : true
+        };
+      } catch (e) {}
+    }
+
+    const defaultTimings = calculateExamTimingDetails('10:00 AM');
+    return {
+      examTime: '10:00 AM',
+      examCenter: 'Government Polytechnic College Mangalore (Kadri Hills)',
+      latestArrival: defaultTimings.latestArrivalTime,
+      leaveByTime: defaultTimings.leaveByTime,
+      isActive: true
+    };
+  }
+
+  saveExamModeSettings(updates: Partial<ExamModeSettings>) {
+    const current = this.getExamModeSettings();
+    const newExamTime = (updates.examTime && updates.examTime.trim()) ? updates.examTime.trim() : current.examTime;
+    const timings = calculateExamTimingDetails(newExamTime);
+
+    const merged: ExamModeSettings = {
+      examTime: newExamTime,
+      examCenter: updates.examCenter || current.examCenter,
+      latestArrival: timings.latestArrivalTime,
+      leaveByTime: timings.leaveByTime,
+      isActive: updates.isActive !== undefined ? updates.isActive : current.isActive
+    };
+
+    localStorage.setItem(STORAGE_KEYS.EXAM_MODE_SETTINGS, JSON.stringify(merged));
+    this.notify();
   }
 
   getRequestsForStudent(studentId: string): PickupRequest[] {

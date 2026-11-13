@@ -98,3 +98,4 @@ export const AdminAuditLogModal: React.FC<Props> = ({ isOpen, onClose }) => {
     </div>
   );
 };
+
