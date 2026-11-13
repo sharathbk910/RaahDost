@@ -334,6 +334,8 @@ export interface PickupRequest {
   studentId: string;
   studentName: string;
   studentPhone?: string;
+  studentAvatar?: string;
+  seatsRequested?: number;
   pickupLocationName: string;
   pickupCoordinates?: { lat: number; lng: number };
   destinationName: string;

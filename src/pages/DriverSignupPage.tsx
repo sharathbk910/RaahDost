@@ -480,3 +480,4 @@ export const DriverSignupPage: React.FC<Props> = ({ navigate }) => {
     </div>
   );
 };
+

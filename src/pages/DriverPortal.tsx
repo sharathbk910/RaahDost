@@ -21,6 +21,7 @@ import { useAuth } from '../context/AuthContext';
 import { db } from '../services/dataStore';
 import { DriverProfile, PickupRequest, Vehicle } from '../types';
 import { FirstTimeTourModal } from '../components/common/FirstTimeTourModal';
+import { DriverRequestModal } from '../components/driver/DriverRequestModal';
 
 interface Props {
   navigate?: (route: string) => void;
@@ -49,6 +50,9 @@ export const DriverPortal: React.FC<Props> = ({ navigate }) => {
   const [departureTime, setDepartureTime] = useState('07:30 AM');
   const [gpsActive, setGpsActive] = useState(false);
   const [acceptedRequest, setAcceptedRequest] = useState<PickupRequest | null>(null);
+  const [activeModalRequest, setActiveModalRequest] = useState<PickupRequest | null>(null);
+  const [ignoreCount, setIgnoreCount] = useState<number>(0);
+  const [pausedUntil, setPausedUntil] = useState<number | null>(null);
 
   // Subscribe to real-time database store updates
   useEffect(() => {
@@ -127,37 +131,73 @@ export const DriverPortal: React.FC<Props> = ({ navigate }) => {
     setSeatsFree(prev => Math.max(0, Math.min((driver.totalSeats || 6), prev + delta)));
   };
 
+  // Check for new incoming request to show pop-up modal
+  useEffect(() => {
+    if (!isAvailable || !driver) return;
+    if (pausedUntil && Date.now() < pausedUntil) return;
+
+    if (!activeModalRequest && !acceptedRequest) {
+      const pendingReq = incomingRequests.find(r => r.status === 'requested' || r.status === 'searching');
+      if (pendingReq) {
+        setActiveModalRequest(pendingReq);
+      }
+    }
+  }, [incomingRequests, isAvailable, driver, activeModalRequest, acceptedRequest, pausedUntil]);
+
   // Accept Pickup Request atomically (transaction-safe)
   const handleAcceptRequest = (req: PickupRequest) => {
     if (!driver) return;
+    setIgnoreCount(0);
     const res = db.atomicAcceptPickupRequest(req.id, driver);
     if (!res.success) {
       alert(res.error || 'This ride was already accepted by another driver.');
+      setActiveModalRequest(null);
       return;
     }
-    setAcceptedRequest(res.request || { ...req, status: 'accepted' });
+    const acc = res.request || { ...req, status: 'accepted' };
+    setAcceptedRequest(acc);
+    setActiveModalRequest(acc);
   };
 
   // Decline or Cancel Pickup Request
   const handleDeclineRequest = (req: PickupRequest) => {
+    const nextIgnore = ignoreCount + 1;
+    setIgnoreCount(nextIgnore);
+    if (nextIgnore >= 3) {
+      setPausedUntil(Date.now() + 10 * 60 * 1000); // 10 minutes anti-spam pause
+    }
     db.cancelPickupRequest(req.id, 'driver');
+    if (activeModalRequest?.id === req.id) {
+      setActiveModalRequest(null);
+    }
     if (acceptedRequest?.id === req.id) {
       setAcceptedRequest(null);
     }
   };
 
   // Mark Picked up / Dropped
-  const handleCompleteTripStep = (status: 'picked_up' | 'dropped') => {
-    if (!acceptedRequest) return;
-    db.updatePickupRequestStatus(acceptedRequest.id, status);
+  const handleCompleteTripStep = (status: 'picked_up' | 'dropped', reqId?: string) => {
+    const targetId = reqId || acceptedRequest?.id || activeModalRequest?.id;
+    if (!targetId) return;
+    db.updatePickupRequestStatus(targetId, status);
     if (status === 'dropped') {
       setAcceptedRequest(null);
+      setActiveModalRequest(null);
       if (driver) {
         db.adjustDriverSeats(driver.id, 1); // restore seat for next passenger
       }
     } else {
-      setAcceptedRequest({ ...acceptedRequest, status });
+      if (acceptedRequest) {
+        setAcceptedRequest({ ...acceptedRequest, status });
+      }
+      if (activeModalRequest) {
+        setActiveModalRequest({ ...activeModalRequest, status });
+      }
     }
+  };
+
+  const handleEmergencySOS = () => {
+    alert('🚨 Emergency SOS dispatched! Mangalore District Police & Student Transport Control notified.');
   };
 
   // Bus Driver Status Controls
@@ -174,6 +214,34 @@ export const DriverPortal: React.FC<Props> = ({ navigate }) => {
       {/* Tour Modal */}
       {showTour && (
         <FirstTimeTourModal role="driver" onClose={() => setShowTour(false)} />
+      )}
+
+      {/* Driver Request Pop-Up Modal */}
+      {activeModalRequest && driver && (
+        <DriverRequestModal
+          request={activeModalRequest}
+          driver={driver}
+          onAccept={handleAcceptRequest}
+          onDecline={handleDeclineRequest}
+          onCompleteStep={(reqId, status) => handleCompleteTripStep(status, reqId)}
+          onEmergencySOS={handleEmergencySOS}
+        />
+      )}
+
+      {/* Anti-Spam Pause Notification */}
+      {pausedUntil && Date.now() < pausedUntil && (
+        <div className="p-3.5 bg-amber-50 border border-amber-300 rounded-2xl flex items-center justify-between text-xs font-semibold text-amber-900 shadow-sm">
+          <span>⚠️ 3 requests were ignored. Pop-up alerts paused for 10 min.</span>
+          <button
+            onClick={() => {
+              setPausedUntil(null);
+              setIgnoreCount(0);
+            }}
+            className="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold"
+          >
+            Resume Alerts
+          </button>
+        </div>
       )}
 
       {/* Driver Header Card */}

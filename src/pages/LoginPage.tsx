@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 import { 
   Bus, 
+  Car, 
+  ShieldCheck, 
+  GraduationCap, 
   Mail, 
   Lock, 
   ArrowRight, 
   AlertCircle, 
-  UserCheck
+  Sparkles,
+  CheckCircle2
 } from 'lucide-react';
 import { useAuth, UserRole } from '../context/AuthContext';
 
@@ -21,6 +25,17 @@ export const LoginPage: React.FC<Props> = ({ navigate }) => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const handleQuickRole = (role: UserRole) => {
+    loginAsDemoRole(role);
+    if (role === 'student') {
+      navigate('/student');
+    } else if (role === 'driver' || role === 'operator') {
+      navigate('/driver');
+    } else {
+      navigate('/dashboard');
+    }
+  };
+
   const handleGoogleSignIn = async () => {
     setErrorMsg(null);
     setLoading(true);
@@ -29,7 +44,7 @@ export const LoginPage: React.FC<Props> = ({ navigate }) => {
     if (error) {
       setErrorMsg(error.message);
     } else {
-      navigate('/dashboard');
+      navigate('/student');
     }
   };
 
@@ -45,41 +60,126 @@ export const LoginPage: React.FC<Props> = ({ navigate }) => {
     if (error) {
       setErrorMsg(error.message);
     } else {
-      navigate('/dashboard');
-    }
-  };
-
-  const handleQuickDemoRole = (role: UserRole) => {
-    loginAsDemoRole(role);
-    if (role === 'student') {
-      navigate('/student');
-    } else if (role === 'operator') {
-      navigate('/vehicles');
-    } else {
-      navigate('/dashboard');
+      if (email.includes('admin')) {
+        navigate('/dashboard');
+      } else if (email.includes('driver')) {
+        navigate('/driver');
+      } else {
+        navigate('/student');
+      }
     }
   };
 
   return (
-    <div className="max-w-md mx-auto py-4 sm:py-8 space-y-6">
+    <div className="max-w-xl mx-auto py-4 sm:py-8 space-y-6">
       {/* Brand Header */}
       <div className="text-center space-y-2">
-        <div className="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-br from-brand-500 to-emerald-700 flex items-center justify-center shadow-lg shadow-brand-500/20">
-          <Bus className="w-6 h-6 text-white" />
+        <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+          <Bus className="w-7 h-7 text-white" />
         </div>
-        <h1 className="text-2xl font-black text-slate-900 tracking-tight">RaahDost Login</h1>
-        <p className="text-xs font-semibold text-emerald-600">Your friend on every road.</p>
+        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">RaahDost Login</h1>
+        <p className="text-xs sm:text-sm font-semibold text-emerald-600">Your friend on every road.</p>
+        <p className="text-xs text-slate-500 max-w-sm mx-auto">
+          AI-Assisted Rural Student Mobility Network • Dakshina Kannada, Mangalore
+        </p>
       </div>
 
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-xl p-6 sm:p-8 space-y-6">
+      {/* 3 PRIMARY PORTAL BUTTONS (Phase 1 Requirement) */}
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-xl p-5 sm:p-7 space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+              Instant 1-Click Access
+            </span>
+            <h2 className="text-sm sm:text-base font-black text-slate-900 mt-1">Select Your Portal Role</h2>
+          </div>
+          <Sparkles className="w-4 h-4 text-emerald-500" />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* 1. Student Portal */}
+          <button
+            type="button"
+            onClick={() => handleQuickRole('student')}
+            className="group p-4 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-md shadow-emerald-500/20 text-left transition-all hover:-translate-y-0.5 active:translate-y-0"
+          >
+            <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center mb-2.5">
+              <GraduationCap className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-[10px] uppercase font-black bg-white/20 px-1.5 py-0.5 rounded text-emerald-100">
+              Student
+            </span>
+            <h3 className="text-sm font-black mt-1">Student Portal</h3>
+            <p className="text-[11px] text-emerald-100 mt-0.5 leading-snug">
+              Find live buses, ride requests, Exam Mode & AI guide.
+            </p>
+            <div className="mt-3 flex items-center space-x-1 text-[11px] font-bold group-hover:translate-x-1 transition-transform">
+              <span>Enter Portal</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </div>
+          </button>
+
+          {/* 2. Driver Portal */}
+          <button
+            type="button"
+            onClick={() => handleQuickRole('driver')}
+            className="group p-4 rounded-2xl bg-gradient-to-br from-teal-600 to-cyan-700 hover:from-teal-700 hover:to-cyan-800 text-white shadow-md shadow-teal-600/20 text-left transition-all hover:-translate-y-0.5 active:translate-y-0"
+          >
+            <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center mb-2.5">
+              <Car className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-[10px] uppercase font-black bg-white/20 px-1.5 py-0.5 rounded text-teal-100">
+              Driver
+            </span>
+            <h3 className="text-sm font-black mt-1">Driver Portal</h3>
+            <p className="text-[11px] text-teal-100 mt-0.5 leading-snug">
+              Go Available, live 5s GPS, accept student pickups.
+            </p>
+            <div className="mt-3 flex items-center space-x-1 text-[11px] font-bold group-hover:translate-x-1 transition-transform">
+              <span>Enter Portal</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </div>
+          </button>
+
+          {/* 3. Admin Dashboard */}
+          <button
+            type="button"
+            onClick={() => handleQuickRole('admin')}
+            className="group p-4 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 hover:from-slate-900 hover:to-black text-white shadow-md shadow-slate-900/30 text-left transition-all hover:-translate-y-0.5 active:translate-y-0"
+          >
+            <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center mb-2.5">
+              <ShieldCheck className="w-5 h-5 text-amber-400" />
+            </div>
+            <span className="text-[10px] uppercase font-black bg-amber-400/20 text-amber-300 px-1.5 py-0.5 rounded">
+              Admin
+            </span>
+            <h3 className="text-sm font-black mt-1">Admin Dashboard</h3>
+            <p className="text-[11px] text-slate-300 mt-0.5 leading-snug">
+              Fleet CRUD, driver approvals, crisis control simulation.
+            </p>
+            <div className="mt-3 flex items-center space-x-1 text-[11px] font-bold text-amber-400 group-hover:translate-x-1 transition-transform">
+              <span>Enter Dashboard</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </div>
+          </button>
+        </div>
+      </div>
+
+      {/* ALTERNATIVE LOGIN (Google OAuth / Email) */}
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-md p-5 sm:p-7 space-y-5">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold text-slate-700">Or Sign In with Account</span>
+          <span className="text-[10px] text-slate-400 font-medium">Supabase Auth Enabled</span>
+        </div>
+
         {errorMsg && (
-          <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-start space-x-2">
-            <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+          <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold flex items-start space-x-2">
+            <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
             <p className="leading-relaxed">{errorMsg}</p>
           </div>
         )}
 
-        {/* 1. Google OAuth Button */}
+        {/* Google OAuth Button */}
         <button
           type="button"
           onClick={handleGoogleSignIn}
@@ -114,8 +214,8 @@ export const LoginPage: React.FC<Props> = ({ navigate }) => {
           </span>
         </div>
 
-        {/* 2. Email / Password Login Form */}
-        <form onSubmit={handleEmailSubmit} className="space-y-4">
+        {/* Email / Password Form */}
+        <form onSubmit={handleEmailSubmit} className="space-y-3.5">
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1">Email Address</label>
             <div className="relative">
@@ -126,7 +226,7 @@ export const LoginPage: React.FC<Props> = ({ navigate }) => {
                 placeholder="name@polytechnic.ac.in"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
           </div>
@@ -137,7 +237,7 @@ export const LoginPage: React.FC<Props> = ({ navigate }) => {
               <button
                 type="button"
                 onClick={() => navigate('/forgot-password')}
-                className="text-[11px] font-semibold text-brand-600 hover:text-brand-700"
+                className="text-[11px] font-semibold text-emerald-600 hover:text-emerald-700"
               >
                 Forgot?
               </button>
@@ -150,7 +250,7 @@ export const LoginPage: React.FC<Props> = ({ navigate }) => {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
           </div>
@@ -158,64 +258,27 @@ export const LoginPage: React.FC<Props> = ({ navigate }) => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-black text-xs shadow-md transition-colors flex items-center justify-center space-x-2"
+            className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs shadow-md transition-colors flex items-center justify-center space-x-2"
           >
             <span>Sign In to RaahDost</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
 
-        <div className="text-center text-xs text-slate-500">
-          Don't have an account?{' '}
+        <div className="flex items-center justify-center space-x-4 pt-2 text-xs text-slate-500">
+          <span>Need an account?</span>
           <button
-            onClick={() => navigate('/signup')}
-            className="font-bold text-brand-600 hover:text-brand-700 underline"
+            onClick={() => navigate('/signup-student')}
+            className="font-bold text-emerald-600 hover:underline"
           >
-            Register Student Account
+            Student Sign Up
           </button>
-        </div>
-      </div>
-
-      {/* Quick Role Access for review */}
-      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-          Instant Role Profiles:
-        </h4>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <span>•</span>
           <button
-            type="button"
-            onClick={() => handleQuickDemoRole('admin')}
-            className="p-2.5 rounded-xl bg-white border border-slate-200 hover:border-brand-500 text-left transition-all"
+            onClick={() => navigate('/signup-driver')}
+            className="font-bold text-teal-600 hover:underline"
           >
-            <span className="text-[10px] font-black uppercase text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
-              Admin
-            </span>
-            <p className="text-xs font-bold text-slate-900 mt-1">Dr. Srivastava</p>
-            <p className="text-[10px] text-slate-400">Chief Officer</p>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleQuickDemoRole('operator')}
-            className="p-2.5 rounded-xl bg-white border border-slate-200 hover:border-brand-500 text-left transition-all"
-          >
-            <span className="text-[10px] font-black uppercase text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
-              Operator
-            </span>
-            <p className="text-xs font-bold text-slate-900 mt-1">Rameshwar Y.</p>
-            <p className="text-[10px] text-slate-400">Fleet Owner</p>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleQuickDemoRole('student')}
-            className="p-2.5 rounded-xl bg-white border border-slate-200 hover:border-brand-500 text-left transition-all"
-          >
-            <span className="text-[10px] font-black uppercase text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
-              Student
-            </span>
-            <p className="text-xs font-bold text-slate-900 mt-1">Aarav Sharma</p>
-            <p className="text-[10px] text-slate-400">Polytechnic 2nd Yr</p>
+            Driver Sign Up
           </button>
         </div>
       </div>

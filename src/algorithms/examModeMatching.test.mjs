@@ -128,3 +128,4 @@ assert.strictEqual(driver2.rating, 4.9);
 console.log('✅ Test 6: Post-trip driver rating updated.');
 
 console.log('🎉 ALL EXAM MODE MATCHING & ATOMIC ACCEPTANCE TESTS PASSED!');
+

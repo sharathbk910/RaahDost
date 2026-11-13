@@ -453,3 +453,4 @@ export const StudentSignupPage: React.FC<Props> = ({ navigate }) => {
     </div>
   );
 };
+
