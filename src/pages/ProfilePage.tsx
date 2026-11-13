@@ -162,26 +162,7 @@ export const ProfilePage: React.FC<Props> = ({ navigate }) => {
           </div>
         </form>
       </div>
-
-      {/* Cloud Console & OAuth Setup Guide for deployment */}
-      <div className="bg-slate-50 rounded-2xl border border-slate-200 p-6 space-y-3">
-        <div className="flex items-center space-x-2">
-          <Shield className="w-4 h-4 text-brand-600" />
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-            Google Cloud Console OAuth Instructions
-          </h3>
-        </div>
-        <p className="text-xs text-slate-600 leading-relaxed">
-          To enable live Google Sign-In with your Supabase backend:
-        </p>
-        <ol className="text-xs text-slate-600 space-y-1.5 list-decimal pl-4">
-          <li>Create a project in <a href="https://console.cloud.google.com/" target="_blank" rel="noreferrer" className="text-brand-600 underline font-semibold">Google Cloud Console</a>.</li>
-          <li>Under <strong>OAuth consent screen</strong>, select External and configure app name.</li>
-          <li>Under <strong>Credentials</strong>, create OAuth Client ID &rarr; Web application.</li>
-          <li>Add Authorized Redirect URI: <code className="bg-slate-200 px-1 py-0.5 rounded text-[11px] font-mono">https://&lt;your-supabase-project&gt;.supabase.co/auth/v1/callback</code>.</li>
-          <li>Enter Google Client ID and Secret in Supabase Dashboard &rarr; Authentication &rarr; Providers &rarr; Google.</li>
-        </ol>
-      </div>
     </div>
   );
 };
+

@@ -15,6 +15,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 function MainApp() {
   const [currentRoute, setCurrentRoute] = useState<string>('/');
   const [refreshKey, setRefreshKey] = useState<number>(0);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const { user } = useAuth();
 
   const handleResetDemo = () => {
@@ -23,9 +24,8 @@ function MainApp() {
     alert('✅ Demo environment reset to initial state: 30 stranded students & 34 alternative vehicle seats ready for Route Rescue.');
   };
 
-  // Protected Route Logic
   const renderPage = () => {
-    // If accessing protected routes without user session, prompt login
+    // Protected Route Logic
     const protectedRoutes = ['/dashboard', '/rescue', '/vehicles', '/disruptions', '/profile'];
     if (protectedRoutes.includes(currentRoute) && !user) {
       return <LoginPage navigate={setCurrentRoute} />;
@@ -52,7 +52,7 @@ function MainApp() {
         return <ProfilePage navigate={setCurrentRoute} />;
       case '/forgot-password':
         return (
-          <div className="max-w-md mx-auto py-12 text-center bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+          <div className="max-w-md mx-auto py-8 sm:py-12 text-center bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-4">
             <h2 className="text-xl font-black text-slate-900">Password Recovery</h2>
             <p className="text-xs text-slate-500">
               Enter your student or institutional email to receive a password reset link from Supabase Auth.
@@ -85,25 +85,32 @@ function MainApp() {
   };
 
   return (
-    <div key={refreshKey} className="min-h-screen bg-slate-100 flex flex-col text-slate-900 font-sans">
+    <div key={refreshKey} className="min-h-screen bg-slate-100 flex flex-col text-slate-900 font-sans antialiased">
       <TopNavbar 
         currentRoute={currentRoute} 
         navigate={setCurrentRoute} 
-        onResetDemo={handleResetDemo} 
+        onResetDemo={handleResetDemo}
+        isMobileMenuOpen={isMobileMenuOpen}
+        setIsMobileMenuOpen={setIsMobileMenuOpen}
       />
 
-      <div className="flex-1 flex flex-col md:flex-row max-w-7xl w-full mx-auto">
-        <Sidebar currentRoute={currentRoute} navigate={setCurrentRoute} />
+      <div className="flex-1 flex flex-col md:flex-row max-w-7xl w-full mx-auto relative">
+        <Sidebar 
+          currentRoute={currentRoute} 
+          navigate={setCurrentRoute} 
+          isMobileOpen={isMobileMenuOpen}
+          closeMobileMenu={() => setIsMobileMenuOpen(false)}
+        />
         
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+        <main className="flex-1 p-3.5 sm:p-6 lg:p-8 overflow-y-auto w-full">
           {renderPage()}
         </main>
       </div>
 
       <footer className="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span><strong>RaahDost</strong> — AI-Assisted Rural Student Mobility Network</span>
-          <span>Supabase Auth & Google OAuth Ready • Your Journey. Our Responsibility.</span>
+          <span><strong>RaahDost</strong> — Smart Rural Student Mobility Network</span>
+          <span>Your Journey. Our Responsibility.</span>
         </div>
       </footer>
     </div>

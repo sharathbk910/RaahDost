@@ -177,3 +177,4 @@ export const SignupPage: React.FC<Props> = ({ navigate }) => {
     </div>
   );
 };
+

@@ -5,9 +5,6 @@ import {
   Lock, 
   ArrowRight, 
   AlertCircle, 
-  ShieldCheck, 
-  CheckCircle2,
-  Sparkles,
   UserCheck
 } from 'lucide-react';
 import { useAuth, UserRole } from '../context/AuthContext';
@@ -17,7 +14,7 @@ interface Props {
 }
 
 export const LoginPage: React.FC<Props> = ({ navigate }) => {
-  const { signInWithGoogle, signInWithEmail, loginAsDemoRole, isConfigured } = useAuth();
+  const { signInWithGoogle, signInWithEmail, loginAsDemoRole } = useAuth();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -62,11 +59,11 @@ export const LoginPage: React.FC<Props> = ({ navigate }) => {
   };
 
   return (
-    <div className="max-w-md mx-auto py-8 space-y-6">
+    <div className="max-w-md mx-auto py-4 sm:py-8 space-y-6">
       {/* Brand Header */}
       <div className="text-center space-y-2">
-        <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-brand-500 to-emerald-700 flex items-center justify-center shadow-xl shadow-brand-500/20">
-          <Bus className="w-8 h-8 text-white" />
+        <div className="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-br from-brand-500 to-emerald-700 flex items-center justify-center shadow-lg shadow-brand-500/20">
+          <Bus className="w-6 h-6 text-white" />
         </div>
         <h1 className="text-2xl font-black text-slate-900 tracking-tight">RaahDost Login</h1>
         <p className="text-xs font-semibold text-slate-500">Your Journey. Our Responsibility.</p>
@@ -74,12 +71,9 @@ export const LoginPage: React.FC<Props> = ({ navigate }) => {
 
       <div className="bg-white rounded-3xl border border-slate-200 shadow-xl p-6 sm:p-8 space-y-6">
         {errorMsg && (
-          <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-start space-x-2">
+          <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-start space-x-2">
             <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="font-bold">Authentication Notice:</p>
-              <p className="mt-0.5 leading-relaxed">{errorMsg}</p>
-            </div>
+            <p className="leading-relaxed">{errorMsg}</p>
           </div>
         )}
 
@@ -90,7 +84,6 @@ export const LoginPage: React.FC<Props> = ({ navigate }) => {
           disabled={loading}
           className="w-full py-3 px-4 rounded-xl border border-slate-300 hover:border-slate-400 bg-white hover:bg-slate-50 font-bold text-xs text-slate-700 flex items-center justify-center space-x-3 shadow-sm transition-all"
         >
-          {/* Google SVG icon */}
           <svg className="w-4 h-4" viewBox="0 0 24 24">
             <path
               fill="#4285F4"
@@ -115,7 +108,7 @@ export const LoginPage: React.FC<Props> = ({ navigate }) => {
         <div className="relative flex items-center justify-center">
           <div className="border-t border-slate-200 w-full"></div>
           <span className="bg-white px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-            or email sign in
+            or sign in with email
           </span>
         </div>
 
@@ -181,23 +174,16 @@ export const LoginPage: React.FC<Props> = ({ navigate }) => {
         </div>
       </div>
 
-      {/* 3. Fast Demo Role Switcher for Hackathon Judges */}
-      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-3">
-        <div className="flex items-center space-x-2">
-          <Sparkles className="w-4 h-4 text-amber-500" />
-          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-            Instant Demo Profiles (Judges Quick Access):
-          </h4>
-        </div>
-        <p className="text-[11px] text-slate-500 leading-normal">
-          Click below to instantly test the system under each security role without typing credentials:
-        </p>
-
-        <div className="grid grid-cols-3 gap-2 pt-1">
+      {/* Quick Role Access for review */}
+      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3">
+        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+          Instant Role Profiles:
+        </h4>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           <button
             type="button"
             onClick={() => handleQuickDemoRole('admin')}
-            className="p-2.5 rounded-xl bg-white border border-slate-200 hover:border-brand-500 text-left transition-all group"
+            className="p-2.5 rounded-xl bg-white border border-slate-200 hover:border-brand-500 text-left transition-all"
           >
             <span className="text-[10px] font-black uppercase text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
               Admin
@@ -209,19 +195,19 @@ export const LoginPage: React.FC<Props> = ({ navigate }) => {
           <button
             type="button"
             onClick={() => handleQuickDemoRole('operator')}
-            className="p-2.5 rounded-xl bg-white border border-slate-200 hover:border-brand-500 text-left transition-all group"
+            className="p-2.5 rounded-xl bg-white border border-slate-200 hover:border-brand-500 text-left transition-all"
           >
             <span className="text-[10px] font-black uppercase text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
               Operator
             </span>
             <p className="text-xs font-bold text-slate-900 mt-1">Rameshwar Y.</p>
-            <p className="text-[10px] text-slate-400">Bolero Van Fleet</p>
+            <p className="text-[10px] text-slate-400">Fleet Owner</p>
           </button>
 
           <button
             type="button"
             onClick={() => handleQuickDemoRole('student')}
-            className="p-2.5 rounded-xl bg-white border border-slate-200 hover:border-brand-500 text-left transition-all group"
+            className="p-2.5 rounded-xl bg-white border border-slate-200 hover:border-brand-500 text-left transition-all"
           >
             <span className="text-[10px] font-black uppercase text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
               Student
