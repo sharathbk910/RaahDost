@@ -793,6 +793,13 @@ class LocalDataStore {
   saveCrisisSimulation(result: CrisisSimulationResult | null) {
     if (result) {
       localStorage.setItem(STORAGE_KEYS.CRISIS_SIMULATION, JSON.stringify(result));
+      if (result.isActive) {
+        this.addNotification({
+          title: '⚠️ Exam Day Crisis Plan Activated',
+          message: '2 KSRTC coastal buses disrupted & Kuloor bridge flooded. Priority exam detours via Kinnigoli-Bajpe and relief shuttles are active.',
+          type: 'crisis_alert'
+        });
+      }
     } else {
       localStorage.removeItem(STORAGE_KEYS.CRISIS_SIMULATION);
     }

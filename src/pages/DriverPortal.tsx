@@ -213,7 +213,7 @@ export const DriverPortal: React.FC<Props> = ({ navigate }) => {
   };
 
   return (
-    <div className="max-w-xl mx-auto py-4 px-2 sm:px-4 space-y-5">
+    <div className="max-w-xl mx-auto py-4 px-2 sm:px-4 space-y-5 pb-12">
       {/* Tour Modal */}
       {showTour && (
         <FirstTimeTourModal role="driver" onClose={() => setShowTour(false)} />

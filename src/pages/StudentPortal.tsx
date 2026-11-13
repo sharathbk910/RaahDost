@@ -735,7 +735,7 @@ export const StudentPortal: React.FC<Props> = ({ navigate }) => {
           <button
             type="button"
             onClick={() => setActiveTab('home')}
-            className={`flex flex-col items-center py-1 rounded-xl transition-all ${
+            className={`flex flex-col items-center justify-center min-h-[44px] py-1 rounded-xl transition-all ${
               activeTab === 'home' ? 'text-emerald-600 font-black' : 'text-slate-500 hover:text-slate-900 font-semibold'
             }`}
           >
@@ -746,7 +746,7 @@ export const StudentPortal: React.FC<Props> = ({ navigate }) => {
           <button
             type="button"
             onClick={() => setActiveTab('map')}
-            className={`flex flex-col items-center py-1 rounded-xl transition-all ${
+            className={`flex flex-col items-center justify-center min-h-[44px] py-1 rounded-xl transition-all ${
               activeTab === 'map' ? 'text-emerald-600 font-black' : 'text-slate-500 hover:text-slate-900 font-semibold'
             }`}
           >
@@ -757,7 +757,7 @@ export const StudentPortal: React.FC<Props> = ({ navigate }) => {
           <button
             type="button"
             onClick={() => setActiveTab('help')}
-            className={`flex flex-col items-center py-1 rounded-xl transition-all ${
+            className={`flex flex-col items-center justify-center min-h-[44px] py-1 rounded-xl transition-all ${
               activeTab === 'help' ? 'text-emerald-600 font-black' : 'text-slate-500 hover:text-slate-900 font-semibold'
             }`}
           >
@@ -768,7 +768,7 @@ export const StudentPortal: React.FC<Props> = ({ navigate }) => {
           <button
             type="button"
             onClick={() => setActiveTab('profile')}
-            className={`flex flex-col items-center py-1 rounded-xl transition-all ${
+            className={`flex flex-col items-center justify-center min-h-[44px] py-1 rounded-xl transition-all ${
               activeTab === 'profile' ? 'text-emerald-600 font-black' : 'text-slate-500 hover:text-slate-900 font-semibold'
             }`}
           >
