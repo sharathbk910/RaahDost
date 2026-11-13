@@ -34,7 +34,6 @@ export const StudentGuideChatModal: React.FC = () => {
   const [language, setLanguage] = useState<'en-IN' | 'kn-IN' | 'hi-IN'>('en-IN');
   const [isListening, setIsListening] = useState(false);
   const [speakingId, setSpeakingId] = useState<string | null>(null);
-  const [proactiveNotification, setProactiveNotification] = useState<string | null>(null);
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -61,28 +60,8 @@ export const StudentGuideChatModal: React.FC = () => {
   useEffect(() => {
     if (isOpen) {
       chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      setProactiveNotification(null); // Clear bubble once opened
     }
   }, [messages, isOpen]);
-
-  // Proactive background monitor every 90 seconds
-  useEffect(() => {
-    const checkCrisisAndExams = () => {
-      const crisis = db.getCrisisSimulation();
-      const examStudents = db.getExamModeStudentsList();
-      const atRisk = examStudents.filter(s => s.status === 'At risk' || s.isLateRisk);
-
-      if (crisis?.isActive) {
-        setProactiveNotification('⚠️ Exam Day Crisis Active: NH-66 Bridge Flooded. Detour routes ready.');
-      } else if (atRisk.length > 0) {
-        setProactiveNotification(`⚡ ${atRisk.length} student(s) have upcoming exams and need ride matching!`);
-      }
-    };
-
-    checkCrisisAndExams();
-    const interval = setInterval(checkCrisisAndExams, 90000);
-    return () => clearInterval(interval);
-  }, []);
 
   // Web Speech API: Voice-to-Text Recognition
   const toggleSpeechRecognition = () => {
@@ -196,18 +175,8 @@ export const StudentGuideChatModal: React.FC = () => {
 
   return (
     <>
-      {/* Floating Trigger Button with Proactive Bubble */}
-      <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end space-y-2">
-        {proactiveNotification && !isOpen && (
-          <div 
-            onClick={() => setIsOpen(true)}
-            className="cursor-pointer max-w-xs bg-slate-900 text-white p-3 rounded-2xl shadow-2xl border-2 border-amber-400 text-xs font-medium animate-bounce flex items-center space-x-2"
-          >
-            <Sparkles className="w-4 h-4 text-amber-400 flex-shrink-0" />
-            <p className="line-clamp-2 leading-tight">{proactiveNotification}</p>
-          </div>
-        )}
-
+      {/* Floating Trigger Button */}
+      <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end">
         <button
           onClick={() => setIsOpen(!isOpen)}
           className={`flex items-center space-x-2 px-4 py-3.5 rounded-full shadow-2xl font-black text-xs transition-all transform hover:scale-105 active:scale-95 ${
