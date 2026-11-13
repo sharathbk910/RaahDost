@@ -9,11 +9,12 @@ import { Disruptions } from './pages/Disruptions';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { ExamDayCrisisPage } from './pages/ExamDayCrisisPage';
 import { db } from './services/dataStore';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 function MainApp() {
-  const [currentRoute, setCurrentRoute] = useState<string>('/');
+  const [currentRoute, setCurrentRoute] = useState<string>('/crisis');
   const [refreshKey, setRefreshKey] = useState<number>(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const { user } = useAuth();
@@ -26,7 +27,7 @@ function MainApp() {
 
   const renderPage = () => {
     // Protected Route Logic
-    const protectedRoutes = ['/dashboard', '/rescue', '/vehicles', '/disruptions', '/profile'];
+    const protectedRoutes = ['/dashboard', '/rescue', '/vehicles', '/disruptions', '/profile', '/crisis'];
     if (protectedRoutes.includes(currentRoute) && !user) {
       return <LoginPage navigate={setCurrentRoute} />;
     }
@@ -34,6 +35,8 @@ function MainApp() {
     switch (currentRoute) {
       case '/':
         return <LandingPage navigate={setCurrentRoute} />;
+      case '/crisis':
+        return <ExamDayCrisisPage navigate={setCurrentRoute} />;
       case '/dashboard':
         return <Dashboard navigate={setCurrentRoute} />;
       case '/rescue':

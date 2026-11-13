@@ -4,13 +4,15 @@ import {
   Disruption, 
   Village, 
   Institution, 
-  AllocationResult 
+  AllocationResult,
+  CrisisSimulationResult
 } from '../types';
 import { 
   DEMO_VILLAGES, 
   DEMO_INSTITUTIONS, 
   INITIAL_VEHICLES, 
   generateDemoStudents, 
+  generateSurgeStudents,
   INITIAL_DISRUPTION 
 } from '../data/demoData';
 
@@ -22,6 +24,7 @@ const STORAGE_KEYS = {
   DISRUPTIONS: 'raahdost_disruptions',
   ALLOCATIONS: 'raahdost_allocations',
   ACTIVE_RESCUE: 'raahdost_active_rescue',
+  CRISIS_SIMULATION: 'raahdost_crisis_simulation',
 };
 
 class LocalDataStore {
@@ -55,6 +58,7 @@ class LocalDataStore {
     localStorage.setItem(STORAGE_KEYS.DISRUPTIONS, JSON.stringify([INITIAL_DISRUPTION]));
     localStorage.removeItem(STORAGE_KEYS.ACTIVE_RESCUE);
     localStorage.removeItem(STORAGE_KEYS.ALLOCATIONS);
+    localStorage.removeItem(STORAGE_KEYS.CRISIS_SIMULATION);
   }
 
   getVillages(): Village[] {
@@ -84,7 +88,6 @@ class LocalDataStore {
     const index = list.findIndex(v => v.id === id);
     if (index !== -1) {
       list[index] = { ...list[index], ...updates };
-      // Ensure constraints
       if (list[index].availableSeats > list[index].totalCapacity) {
         list[index].availableSeats = list[index].totalCapacity;
       }
@@ -151,7 +154,27 @@ class LocalDataStore {
       localStorage.removeItem(STORAGE_KEYS.ACTIVE_RESCUE);
     }
   }
+
+  // Crisis Simulation State
+  getCrisisSimulation(): CrisisSimulationResult | null {
+    const val = localStorage.getItem(STORAGE_KEYS.CRISIS_SIMULATION);
+    return val ? JSON.parse(val) : null;
+  }
+
+  saveCrisisSimulation(result: CrisisSimulationResult | null) {
+    if (result) {
+      localStorage.setItem(STORAGE_KEYS.CRISIS_SIMULATION, JSON.stringify(result));
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.CRISIS_SIMULATION);
+    }
+  }
+
+  // Load Combined Requests including 40% Surge
+  getCombinedCrisisRequests(): TransportRequest[] {
+    const baseline = this.getRequests().filter(r => !r.isSurgeStudent);
+    const surge = generateSurgeStudents();
+    return [...baseline, ...surge];
+  }
 }
 
 export const db = new LocalDataStore();
-

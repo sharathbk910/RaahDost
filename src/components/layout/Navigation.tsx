@@ -12,7 +12,8 @@ import {
   User as UserIcon,
   LogIn,
   Menu,
-  X
+  X,
+  AlertOctagon
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -132,8 +133,9 @@ export const Sidebar: React.FC<{
 
   const navItems = [
     { id: '/', label: 'Overview', icon: Home },
+    { id: '/crisis', label: 'EXAM CRISIS MODE', icon: AlertOctagon, highlight: true, badge: 'SURPRISE' },
     { id: '/dashboard', label: 'Admin Dashboard', icon: ShieldCheck },
-    { id: '/rescue', label: 'Route Rescue', icon: LifeBuoy, highlight: true },
+    { id: '/rescue', label: 'Route Rescue', icon: LifeBuoy },
     { id: '/disruptions', label: 'Disruption Manager', icon: AlertTriangle },
     { id: '/vehicles', label: 'Vehicle Network', icon: Car },
     { id: '/student', label: 'Student Portal', icon: Users },

@@ -50,13 +50,21 @@ export const Dashboard: React.FC<Props> = ({ navigate }) => {
             Real-time monitoring of rural student travel corridors, emergency disruptions, and coordinated relief fleets.
           </p>
         </div>
-        <button
-          onClick={() => navigate('/rescue')}
-          className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm shadow-lg shadow-amber-500/20 flex items-center justify-center space-x-2 transition-transform active:scale-95"
-        >
-          <LifeBuoy className="w-4 h-4" />
-          <span>Launch Route Rescue</span>
-        </button>
+        <div className="flex items-center space-x-2.5">
+          <button
+            onClick={() => navigate('/crisis')}
+            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-black text-xs shadow-lg shadow-red-600/25 flex items-center space-x-2 transition-transform active:scale-95"
+          >
+            <span>🚨 Exam Day Crisis Mode</span>
+          </button>
+          <button
+            onClick={() => navigate('/rescue')}
+            className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-md flex items-center space-x-2 transition-transform active:scale-95"
+          >
+            <LifeBuoy className="w-4 h-4" />
+            <span>Route Rescue</span>
+          </button>
+        </div>
       </div>
 
       {/* KPI Stats */}

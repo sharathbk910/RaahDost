@@ -12,6 +12,7 @@ export const DEMO_INSTITUTIONS: Institution[] = [
   { id: 'inst-2', name: 'District Higher Secondary School', coordinates: { lat: 26.8650, lng: 80.9820 } },
 ];
 
+// Baseline alternative fleet (Total seats: 12 + 10 + 4 + 8 = 34 seats)
 export const INITIAL_VEHICLES: Vehicle[] = [
   {
     id: 'veh-1',
@@ -71,7 +72,7 @@ export const INITIAL_VEHICLES: Vehicle[] = [
   }
 ];
 
-// Helper to generate 30 students waiting at Rampur Village for Govt Polytechnic
+// Baseline 30 students + realistic examination metadata (Exam Day Crisis)
 export const generateDemoStudents = (): TransportRequest[] => {
   const students: TransportRequest[] = [];
   const names = [
@@ -83,7 +84,18 @@ export const generateDemoStudents = (): TransportRequest[] => {
     'Shalini Saxena', 'Karan Saini', 'Monika Tomar', 'Satish Kumar', 'Anita Rathore'
   ];
 
+  const examSubjects = [
+    'Applied Mathematics II (Board Practical)',
+    'Mechanical Workshop Practice',
+    'Electrical Circuits & Machine Lab',
+    'Computer Programming in C++'
+  ];
+
   for (let i = 0; i < 30; i++) {
+    // 18 students have scheduled semester examinations starting at 09:00 AM (within 2 hours)
+    const hasExam = i < 18;
+    const originalBus = i < 16 ? 'bus-govt-01' : 'bus-govt-02';
+
     students.push({
       id: `req-stu-${i + 1}`,
       studentId: `stu-${i + 1}`,
@@ -93,10 +105,47 @@ export const generateDemoStudents = (): TransportRequest[] => {
       destinationId: 'inst-1', // Govt Polytechnic
       passengerCount: 1,
       status: 'pending',
+      hasExam,
+      examSubject: hasExam ? examSubjects[i % examSubjects.length] : undefined,
+      examStartTime: hasExam ? '09:00 AM' : undefined,
+      minutesToExam: hasExam ? 105 : undefined, // 7:15 AM to 9:00 AM
+      originalBusId: originalBus,
+      isSurgeStudent: false,
       createdAt: new Date(Date.now() - (30 - i) * 60000).toISOString()
     });
   }
   return students;
+};
+
+// Generates 40% surge demand (+12 students over baseline 30 = 42 total students)
+export const generateSurgeStudents = (): TransportRequest[] => {
+  const surgeNames = [
+    'Pradeep Maurya', 'Jyoti Chaurasia', 'Abhishek Soni', 'Swati Bajpai',
+    'Santosh Rawat', 'Rani Prajapati', 'Harish Chandra', 'Madhu Lodhi',
+    'Tarun Vishwakarma', 'Kiran Pal', 'Brijesh Nishad', 'Preeti Gautam'
+  ];
+
+  return surgeNames.map((name, idx) => {
+    // 6 of the surge students also have emergency lab examinations
+    const hasExam = idx < 6;
+    return {
+      id: `req-surge-${idx + 1}`,
+      studentId: `stu-surge-${idx + 1}`,
+      studentCode: `RD-SURGE-${(idx + 1).toString().padStart(3, '0')}`,
+      displayName: `${name} (Surge)`,
+      villageId: idx % 2 === 0 ? 'vil-1' : 'vil-2',
+      destinationId: 'inst-1',
+      passengerCount: 1,
+      status: 'pending',
+      hasExam,
+      examSubject: hasExam ? 'Semester Engineering Physics Board Practical' : undefined,
+      examStartTime: hasExam ? '09:00 AM' : undefined,
+      minutesToExam: hasExam ? 105 : undefined,
+      originalBusId: 'bus-govt-02',
+      isSurgeStudent: true,
+      createdAt: new Date().toISOString()
+    };
+  });
 };
 
 export const INITIAL_DISRUPTION: Disruption = {
@@ -110,4 +159,3 @@ export const INITIAL_DISRUPTION: Disruption = {
   startingVillageId: 'vil-1',
   destinationId: 'inst-1'
 };
-
