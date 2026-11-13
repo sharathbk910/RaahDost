@@ -136,8 +136,6 @@ export const Sidebar: React.FC<{
     { id: '/student', label: 'Student Portal', icon: Users, highlightRole: 'student' },
     { id: '/driver', label: 'Driver Portal', icon: Car, highlightRole: 'driver' },
     { id: '/dashboard', label: 'Admin Dashboard', icon: ShieldCheck, highlightRole: 'admin' },
-    { id: '/crisis', label: 'Exam Day Crisis', icon: AlertOctagon, highlight: true, badge: 'CRISIS' },
-    { id: '/rescue', label: 'Route Rescue', icon: LifeBuoy },
     { id: '/profile', label: 'My Profile', icon: UserIcon },
   ];
 
@@ -176,23 +174,14 @@ export const Sidebar: React.FC<{
                 onClick={() => handleNavClick(item.id)}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                   isActive
-                    ? item.highlight 
-                      ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20' 
-                      : 'bg-brand-600 text-white shadow-md shadow-brand-600/20'
-                    : item.highlight
-                      ? 'bg-amber-50 text-amber-900 border border-amber-200/80 hover:bg-amber-100'
-                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20'
+                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                 }`}
               >
                 <div className="flex items-center space-x-3">
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-white' : item.highlight ? 'text-amber-600' : 'text-slate-500'}`} />
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-500'}`} />
                   <span>{item.label}</span>
                 </div>
-                {item.highlight && !isActive && (
-                  <span className="bg-amber-500 text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded-md">
-                    RESCUE
-                  </span>
-                )}
               </button>
             );
           })}
