@@ -329,3 +329,209 @@ export const INITIAL_DISRUPTION: Disruption = {
   startingVillageId: 'vil-mulki',
   destinationId: 'inst-1'
 };
+
+// ==========================================
+// DEMO DRIVERS (DAKSHINA KANNADA / MANGALORE)
+// ==========================================
+export const DEMO_DRIVERS: any[] = [
+  {
+    id: 'drv-rameshwar',
+    userId: 'user-drv-1',
+    fullName: 'Rameshwar Yadav',
+    phone: '+91 98450 22001',
+    photoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80',
+    driverType: 'community_driver',
+    vehicleType: 'Shared Van',
+    vehicleNumberPlate: 'KA-19-ME-402',
+    totalSeats: 8,
+    seatsFree: 5,
+    approvalStatus: 'approved',
+    isAvailable: true,
+    registeredAt: '2026-09-15T08:00:00Z',
+    rating: 4.9,
+    tripsCompleted: 184,
+    studentsHelpedCount: 412,
+    isDemo: true,
+    activeRoute: {
+      id: 'route-drv-1',
+      startLocation: 'Mulki Bus Stand',
+      startCoordinates: { lat: 13.0906, lng: 74.7925 },
+      destinationLocation: 'Government Polytechnic College Mangalore (Kadri Hills)',
+      destinationCoordinates: { lat: 12.8875, lng: 74.8562 },
+      viaPoints: ['Surathkal Junction', 'Kuloor Bridge'],
+      usualDepartureTime: '07:25 AM',
+      operatingDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    },
+    departureTime: '07:25 AM',
+    currentLocation: {
+      lat: 13.0650,
+      lng: 74.7935,
+      updatedAt: new Date().toISOString()
+    }
+  },
+  {
+    id: 'drv-suresh',
+    userId: 'user-drv-2',
+    fullName: 'Suresh Poojary',
+    phone: '+91 98450 22002',
+    photoUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80',
+    driverType: 'community_driver',
+    vehicleType: 'Car',
+    vehicleNumberPlate: 'KA-19-P-8821',
+    totalSeats: 6,
+    seatsFree: 4,
+    approvalStatus: 'approved',
+    isAvailable: true,
+    registeredAt: '2026-10-01T09:30:00Z',
+    rating: 4.8,
+    tripsCompleted: 92,
+    studentsHelpedCount: 180,
+    isDemo: true,
+    activeRoute: {
+      id: 'route-drv-2',
+      startLocation: 'Surathkal NITK Gate',
+      startCoordinates: { lat: 13.0076, lng: 74.7958 },
+      destinationLocation: 'St. Aloysius College Mangaluru Central',
+      destinationCoordinates: { lat: 12.8733, lng: 74.8436 },
+      viaPoints: ['Kuloor', 'Lalbagh'],
+      usualDepartureTime: '07:45 AM',
+      operatingDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+    },
+    departureTime: '07:45 AM',
+    currentLocation: {
+      lat: 13.0076,
+      lng: 74.7958,
+      updatedAt: new Date().toISOString()
+    }
+  },
+  {
+    id: 'drv-ganesh',
+    userId: 'user-drv-3',
+    fullName: 'Ganesh Shetty',
+    phone: '+91 98450 22003',
+    photoUrl: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=120&auto=format&fit=crop&q=80',
+    driverType: 'community_driver',
+    vehicleType: 'Auto',
+    vehicleNumberPlate: 'KA-19-A-3104',
+    totalSeats: 4,
+    seatsFree: 3,
+    approvalStatus: 'approved',
+    isAvailable: true,
+    registeredAt: '2026-08-20T11:00:00Z',
+    rating: 4.95,
+    tripsCompleted: 240,
+    studentsHelpedCount: 530,
+    isDemo: true,
+    activeRoute: {
+      id: 'route-drv-3',
+      startLocation: 'Moodbidri Bus Terminal',
+      startCoordinates: { lat: 13.0722, lng: 74.9964 },
+      destinationLocation: 'Government Polytechnic College Mangalore',
+      destinationCoordinates: { lat: 12.8875, lng: 74.8562 },
+      viaPoints: ['Mijar', 'Gurupura Bridge', 'Vamanjoor'],
+      usualDepartureTime: '07:15 AM',
+      operatingDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    },
+    departureTime: '07:15 AM',
+    currentLocation: {
+      lat: 13.0722,
+      lng: 74.9964,
+      updatedAt: new Date().toISOString()
+    }
+  },
+  {
+    id: 'drv-priya',
+    userId: 'user-drv-4',
+    fullName: 'Priya Rao (Lecturer Commuter)',
+    phone: '+91 98450 22004',
+    photoUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80',
+    driverType: 'community_driver',
+    vehicleType: 'Car',
+    vehicleNumberPlate: 'KA-19-Z-5509',
+    totalSeats: 4,
+    seatsFree: 2,
+    approvalStatus: 'approved',
+    isAvailable: true,
+    registeredAt: '2026-10-12T07:15:00Z',
+    rating: 5.0,
+    tripsCompleted: 65,
+    studentsHelpedCount: 120,
+    isDemo: true,
+    activeRoute: {
+      id: 'route-drv-4',
+      startLocation: 'Kinnigoli Church Junction',
+      startCoordinates: { lat: 13.1167, lng: 74.8667 },
+      destinationLocation: 'Government PU College for Women (Car Street)',
+      destinationCoordinates: { lat: 12.8680, lng: 74.8380 },
+      viaPoints: ['Kateel', 'Bajpe', 'Kavoor'],
+      usualDepartureTime: '07:30 AM',
+      operatingDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+    },
+    departureTime: '07:30 AM',
+    currentLocation: {
+      lat: 13.1167,
+      lng: 74.8667,
+      updatedAt: new Date().toISOString()
+    }
+  },
+  {
+    id: 'drv-manjunath',
+    userId: 'user-drv-5',
+    fullName: 'Manjunath K. (New Applicant)',
+    phone: '+91 98450 22005',
+    photoUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&auto=format&fit=crop&q=80',
+    driverType: 'community_driver',
+    vehicleType: 'Shared Van',
+    vehicleNumberPlate: 'KA-19-T-9090',
+    vehiclePhotoUrl: 'https://images.unsplash.com/photo-1559297434-fae8a1916a79?w=300&auto=format&fit=crop&q=80',
+    licensePhotoUrl: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=300&auto=format&fit=crop&q=80',
+    totalSeats: 12,
+    seatsFree: 10,
+    approvalStatus: 'pending',
+    isAvailable: false,
+    registeredAt: new Date().toISOString(),
+    rating: 0.0,
+    tripsCompleted: 0,
+    studentsHelpedCount: 0,
+    isDemo: true,
+    activeRoute: {
+      id: 'route-drv-5',
+      startLocation: 'Ullal Post Office',
+      startCoordinates: { lat: 12.8000, lng: 74.8500 },
+      destinationLocation: 'University College Mangalore (Hampankatta)',
+      destinationCoordinates: { lat: 12.8645, lng: 74.8420 },
+      viaPoints: ['Thokkottu', 'Pumpwell Circle'],
+      usualDepartureTime: '08:00 AM',
+      operatingDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    },
+    departureTime: '08:00 AM',
+    currentLocation: {
+      lat: 12.8000,
+      lng: 74.8500,
+      updatedAt: new Date().toISOString()
+    }
+  }
+];
+
+export const DEMO_PICKUP_REQUESTS: any[] = [
+  {
+    id: 'req-pickup-1',
+    studentId: 'demo-student-1',
+    studentName: 'Aarav Sharma',
+    studentPhone: '+91 98450 33001',
+    pickupLocationName: 'Mulki Bus Stand',
+    pickupCoordinates: { lat: 13.0906, lng: 74.7925 },
+    destinationName: 'Government Polytechnic College Mangalore (Kadri Hills)',
+    destinationCoordinates: { lat: 12.8875, lng: 74.8562 },
+    hasExamToday: true,
+    examTime: '10:30 AM',
+    driverId: 'drv-rameshwar',
+    driverName: 'Rameshwar Yadav',
+    driverPhone: '+91 98450 22001',
+    driverVehiclePlate: 'KA-19-ME-402',
+    driverVehicleType: 'Shared Van',
+    status: 'requested',
+    requestedAt: new Date(Date.now() - 5 * 60000).toISOString(),
+    notes: 'Boarding at Pavanje bridge junction. Exam at 10:30 AM.'
+  }
+];

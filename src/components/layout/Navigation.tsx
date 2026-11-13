@@ -133,12 +133,11 @@ export const Sidebar: React.FC<{
 
   const navItems = [
     { id: '/', label: 'Overview', icon: Home },
-    { id: '/crisis', label: 'EXAM CRISIS MODE', icon: AlertOctagon, highlight: true, badge: 'SURPRISE' },
-    { id: '/dashboard', label: 'Admin Dashboard', icon: ShieldCheck },
+    { id: '/student', label: 'Student Portal', icon: Users, highlightRole: 'student' },
+    { id: '/driver', label: 'Driver Portal', icon: Car, highlightRole: 'driver' },
+    { id: '/dashboard', label: 'Admin Dashboard', icon: ShieldCheck, highlightRole: 'admin' },
+    { id: '/crisis', label: 'Exam Day Crisis', icon: AlertOctagon, highlight: true, badge: 'CRISIS' },
     { id: '/rescue', label: 'Route Rescue', icon: LifeBuoy },
-    { id: '/disruptions', label: 'Disruption Manager', icon: AlertTriangle },
-    { id: '/vehicles', label: 'Vehicle Network', icon: Car },
-    { id: '/student', label: 'Student Portal', icon: Users },
     { id: '/profile', label: 'My Profile', icon: UserIcon },
   ];
 

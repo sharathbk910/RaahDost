@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { TopNavbar, Sidebar } from './components/layout/Navigation';
 import { LandingPage } from './pages/LandingPage';
-import { Dashboard } from './pages/Dashboard';
+import { AdminDashboard } from './pages/AdminDashboard';
 import { RouteRescue } from './pages/RouteRescue';
 import { StudentPortal } from './pages/StudentPortal';
+import { DriverPortal } from './pages/DriverPortal';
+import { StudentSignupPage } from './pages/StudentSignupPage';
+import { DriverSignupPage } from './pages/DriverSignupPage';
 import { Vehicles } from './pages/Vehicles';
 import { Disruptions } from './pages/Disruptions';
 import { LoginPage } from './pages/LoginPage';
@@ -15,7 +18,7 @@ import { db } from './services/dataStore';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 function MainApp() {
-  const [currentRoute, setCurrentRoute] = useState<string>('/crisis');
+  const [currentRoute, setCurrentRoute] = useState<string>('/');
   const [refreshKey, setRefreshKey] = useState<number>(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const { user } = useAuth();
@@ -23,12 +26,12 @@ function MainApp() {
   const handleResetDemo = () => {
     db.resetToDefaults();
     setRefreshKey(prev => prev + 1);
-    alert('✅ Demo environment reset to initial state: 30 stranded students & 34 alternative vehicle seats ready for Route Rescue.');
+    alert('✅ Demo environment reset to initial Mangalore state: 30 stranded students & verified community driver fleet ready.');
   };
 
   const renderPage = () => {
     // Protected Route Logic
-    const protectedRoutes = ['/dashboard', '/rescue', '/vehicles', '/disruptions', '/profile', '/crisis'];
+    const protectedRoutes = ['/profile'];
     if (protectedRoutes.includes(currentRoute) && !user) {
       return <LoginPage navigate={setCurrentRoute} />;
     }
@@ -36,14 +39,20 @@ function MainApp() {
     switch (currentRoute) {
       case '/':
         return <LandingPage navigate={setCurrentRoute} />;
+      case '/student':
+        return <StudentPortal navigate={setCurrentRoute} />;
+      case '/driver':
+        return <DriverPortal navigate={setCurrentRoute} />;
+      case '/dashboard':
+        return <AdminDashboard navigate={setCurrentRoute} />;
+      case '/signup-student':
+        return <StudentSignupPage navigate={setCurrentRoute} />;
+      case '/signup-driver':
+        return <DriverSignupPage navigate={setCurrentRoute} />;
       case '/crisis':
         return <ExamDayCrisisPage navigate={setCurrentRoute} />;
-      case '/dashboard':
-        return <Dashboard navigate={setCurrentRoute} />;
       case '/rescue':
         return <RouteRescue navigate={setCurrentRoute} />;
-      case '/student':
-        return <StudentPortal />;
       case '/vehicles':
         return <Vehicles />;
       case '/disruptions':
@@ -98,7 +107,7 @@ function MainApp() {
         setIsMobileMenuOpen={setIsMobileMenuOpen}
       />
 
-      <div className="flex-1 flex flex-col md:flex-row max-w-7xl w-full mx-auto relative">
+      <div className="flex-1 flex max-w-7xl w-full mx-auto">
         <Sidebar 
           currentRoute={currentRoute} 
           navigate={setCurrentRoute} 

@@ -264,3 +264,101 @@ export interface AllocationResult {
   timestamp: string;
   isConfirmed: boolean;
 }
+
+// ==========================================
+// DRIVER PORTAL & REALTIME MOBILITY TYPES
+// ==========================================
+export type DriverApprovalStatus = 'approved' | 'pending' | 'rejected' | 'suspended';
+export type DriverType = 'bus_driver' | 'community_driver';
+export type VehicleCategory = 'Bike' | 'Car' | 'Auto' | 'Shared Van' | 'Mini Bus' | 'Government Bus' | 'Private Bus' | 'Tempo';
+
+export interface DriverRegularRoute {
+  id: string;
+  startLocation: string; // e.g. "Mulki"
+  startCoordinates?: { lat: number; lng: number };
+  destinationLocation: string; // e.g. "Kadri Polytechnic, Mangalore"
+  destinationCoordinates?: { lat: number; lng: number };
+  viaPoints?: string[];
+  usualDepartureTime: string; // e.g. "07:30 AM"
+  operatingDays: string[]; // e.g. ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+}
+
+export interface DriverProfile {
+  id: string;
+  userId: string;
+  fullName: string;
+  phone: string;
+  photoUrl: string;
+  driverType: DriverType;
+  vehicleType: VehicleCategory;
+  vehicleNumberPlate: string;
+  totalSeats: number;
+  vehiclePhotoUrl?: string;
+  licensePhotoUrl?: string;
+  approvalStatus: DriverApprovalStatus;
+  rejectionReason?: string;
+  registeredAt: string;
+  
+  // Daily Live Availability State
+  isAvailable: boolean;
+  activeRoute?: DriverRegularRoute;
+  departureTime?: string;
+  seatsFree: number;
+  currentLocation?: {
+    lat: number;
+    lng: number;
+    updatedAt: string;
+  };
+  assignedBusId?: string; // If government/private bus driver
+  assignedBusCode?: string;
+  busStatus?: 'Running' | 'Delayed' | 'Full' | 'Broken Down';
+  rating: number; // e.g. 4.9
+  tripsCompleted: number;
+  studentsHelpedCount: number;
+  isDemo?: boolean;
+}
+
+export type PickupRequestStatus = 
+  | 'requested' 
+  | 'accepted' 
+  | 'declined' 
+  | 'picked_up' 
+  | 'dropped' 
+  | 'cancelled';
+
+export interface PickupRequest {
+  id: string;
+  studentId: string;
+  studentName: string;
+  studentPhone?: string;
+  pickupLocationName: string;
+  pickupCoordinates?: { lat: number; lng: number };
+  destinationName: string;
+  destinationCoordinates?: { lat: number; lng: number };
+  hasExamToday?: boolean;
+  examTime?: string;
+  driverId: string;
+  driverName: string;
+  driverPhone?: string;
+  driverVehiclePlate?: string;
+  driverVehicleType?: string;
+  status: PickupRequestStatus;
+  requestedAt: string;
+  acceptedAt?: string;
+  completedAt?: string;
+  guardianAlertSent?: boolean;
+  guardianPhone?: string;
+  notes?: string;
+}
+
+export interface DriverReport {
+  id: string;
+  driverId: string;
+  driverName: string;
+  studentId: string;
+  studentName: string;
+  reason: string;
+  details: string;
+  timestamp: string;
+  status: 'pending' | 'resolved';
+}
