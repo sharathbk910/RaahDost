@@ -10,6 +10,7 @@ import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { ExamDayCrisisPage } from './pages/ExamDayCrisisPage';
+import { StudentGuideChatModal } from './components/chat/StudentGuideChatModal';
 import { db } from './services/dataStore';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
@@ -112,10 +113,13 @@ function MainApp() {
 
       <footer className="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span><strong>RaahDost</strong> — Smart Rural Student Mobility Network</span>
+          <span><strong>RaahDost</strong> — Smart Rural Student Mobility Network (Dakshina Kannada / Mangalore DEMO)</span>
           <span>Your Journey. Our Responsibility.</span>
         </div>
       </footer>
+
+      {/* Floating AI Student Guide Assistant */}
+      <StudentGuideChatModal />
     </div>
   );
 }

@@ -23,19 +23,18 @@ export interface CrisisEngineParams {
 }
 
 /**
- * EXAM DAY CRISIS RESCUE & REALLOCATION OPTIMIZER
+ * EXAM DAY CRISIS RESCUE & REALLOCATION OPTIMIZER (MANGALORE REGION)
  * 
  * Accurately implements:
- * 1. 2 Government Buses Fail (UPSRTC #1001 & #1002 marked unavailable)
- * 2. 40% Demand Surge (+12 students over baseline 30 = 42 total students)
- * 3. Flooded Canal Road Blocked (Dijkstra re-routes around blockage via Balarampur Bypass)
+ * 1. 2 Government Buses Fail (KSRTC #1101 & #1102 on NH-66 marked broken down)
+ * 2. 40% Demand Surge (+12 students over baseline 30 = 42 total students across Mulki & Surathkal)
+ * 3. Flooded Kuloor Bridge on NH-66 Blocked (Dijkstra re-routes via Kinnigoli-Kateel-Bajpe-Kadri)
  * 4. 2-Hour Exam Deadline Prioritization (Sorted by soonest exam remaining minutes)
- * 5. Primary Seating: Allocated into available fleet (34 seats)
+ * 5. Primary Seating: Allocated into available local fleet (34 seats)
  * 6. Overflow / Leftover Allocation into 4 Concrete Alternative Options:
- *    - Shared Auto Pool (Emergency 3-wheeler auto rickshaw cluster)
- *    - Merged Route Shuttle (Rampur-Shivpur joint feeder)
+ *    - Shared Auto Pool (Surathkal & Mulki Auto Rickshaw emergency cluster)
+ *    - Merged Route Shuttle (Mulki-Kinnigoli joint express van)
  *    - Staggered Wave Bus (Later Wave 2 transit for non-exam students)
- *    - Nearby Pickup Point Walkway (Consolidated at Balarampur Crossing)
  * 7. Before vs After Comparison & Transparent AI Decision Reasoning
  */
 export function executeExamDayCrisisOptimization(
@@ -54,13 +53,13 @@ export function executeExamDayCrisisOptimization(
   const villageMap = new Map(villages.map(v => [v.id, v.name]));
   const instMap = new Map(institutions.map(i => [i.id, i.name]));
 
-  // 1. Configure Road Network Blockage (Flooded Canal Road)
+  // 1. Configure Road Network Blockage (Flooded Kuloor Bridge on NH-66)
   const roadNetwork: RoadSegment[] = ROAD_NETWORK.map(r => {
-    if (r.id === 'road-rampur-poly-direct' && isFlooded) {
+    if (r.id === 'road-nh66-mulki-poly-direct' && isFlooded) {
       return {
         ...r,
         isBlocked: true,
-        blockageReason: 'Rampur Canal overflowing due to flash flood. Road closed by local police.'
+        blockageReason: 'Kuloor Bridge over Gurupura River flooded by tidal flash storm. Traffic prohibited by Mangaluru City Traffic Police.'
       };
     }
     return { ...r, isBlocked: false };
@@ -71,30 +70,30 @@ export function executeExamDayCrisisOptimization(
   // 2. Identify 2 Government Buses that Break Down (Event 1)
   const unavailableBuses: Vehicle[] = [
     {
-      id: 'bus-govt-01',
-      vehicleCode: 'UP-32-GB-1001',
-      name: 'State Roadways Bus #1001 (Rampur Route)',
+      id: 'bus-ksrtc-01',
+      vehicleCode: 'KA-19-F-1101',
+      name: 'KSRTC Express Bus #1101 (Mulki ➔ Mangalore Central)',
       vehicleType: 'Government Bus',
-      startingVillageId: 'vil-1',
+      startingVillageId: 'vil-mulki',
       destinationId: 'inst-1',
-      totalCapacity: 32,
+      totalCapacity: 45,
       availableSeats: 0,
       availabilityStatus: 'unavailable',
       operatorConfirmed: false,
-      driverName: 'Harish Chandra (UPSRTC)'
+      driverName: 'Shekhar Poojary (KSRTC Mangaluru Depot)'
     },
     {
-      id: 'bus-govt-02',
-      vehicleCode: 'UP-32-GB-1002',
-      name: 'State Roadways Bus #1002 (Express Corridor)',
+      id: 'bus-ksrtc-02',
+      vehicleCode: 'KA-19-F-1102',
+      name: 'KSRTC City Express #1102 (Surathkal ➔ Hampankatta)',
       vehicleType: 'Government Bus',
-      startingVillageId: 'vil-1',
-      destinationId: 'inst-1',
-      totalCapacity: 28,
+      startingVillageId: 'vil-surathkal',
+      destinationId: 'inst-3',
+      totalCapacity: 42,
       availableSeats: 0,
       availabilityStatus: 'unavailable',
       operatorConfirmed: false,
-      driverName: 'Ram Avatar (UPSRTC)'
+      driverName: 'Anand Gowda (KSRTC)'
     }
   ];
 
@@ -112,14 +111,14 @@ export function executeExamDayCrisisOptimization(
 
   const totalAvailableSeats = usableVehicles.reduce((sum, v) => sum + v.initialAvailable, 0);
 
-  // 4. Calculate Route Detour for Rampur -> Polytechnic via Dijkstra
-  const alternativeRoute = findShortestRoute('vil-1', 'inst-1', roadNetwork, true);
+  // 4. Calculate Route Detour for Mulki -> Polytechnic via Dijkstra
+  const alternativeRoute = findShortestRoute('vil-mulki', 'inst-1', roadNetwork, true);
   const routeSummary = {
-    originalPath: 'Rampur Village ➔ Canal Road (Direct) ➔ Govt Polytechnic',
-    alternativePath: alternativeRoute.pathSegmentNames.join(' ➔ ') || 'Rampur ➔ Shivpur Link ➔ Balarampur Bypass ➔ Polytechnic',
-    originalMinutes: alternativeRoute.originalDurationMinutes || 20,
+    originalPath: 'Mulki ➔ NH-66 Direct (via Kuloor Bridge) ➔ Kadri Polytechnic',
+    alternativePath: alternativeRoute.pathSegmentNames.join(' ➔ ') || 'Mulki ➔ Kinnigoli ➔ Kateel ➔ Bajpe ➔ Kadri Airport Road',
+    originalMinutes: alternativeRoute.originalDurationMinutes || 38,
     newMinutes: alternativeRoute.totalDurationMinutes,
-    delayMinutes: alternativeRoute.delayMinutes || 25
+    delayMinutes: alternativeRoute.delayMinutes || 27
   };
 
   // 5. Total Demand Calculation (Baseline 30 + 40% Surge = 42 Students)
@@ -127,7 +126,7 @@ export function executeExamDayCrisisOptimization(
   const surgeCount = requests.filter(r => r.isSurgeStudent).length || 12;
   const totalDemand = requests.length;
 
-  // 6. Multi-tier Sorting Priority Engine (Soonest exam first)
+  // 6. Multi-tier Sorting Priority Engine (Soonest exam remaining time first)
   const sortedRequests = [...requests].sort((a, b) => {
     // Exam students first
     if (a.hasExam && !b.hasExam) return -1;
@@ -138,16 +137,16 @@ export function executeExamDayCrisisOptimization(
       return (a.minutesToExam || 105) - (b.minutesToExam || 105);
     }
 
-    // Then prioritize regular students stranded from original broken buses
+    // Then prioritize regular students stranded from broken buses
     if (a.originalBusId && !b.originalBusId) return -1;
     if (!a.originalBusId && b.originalBusId) return 1;
 
     return 0;
   });
 
-  // Time calculations (Current simulated time: 7:15 AM = 435 minutes from midnight)
+  // Simulated morning departure: 07:15 AM = 435 minutes from midnight
   const currentSimMinutes = 7 * 60 + 15; // 435
-  const examDeadLineMinutes = 9 * 60; // 540 (9:00 AM)
+  const examDeadLineMinutes = 9 * 60; // 540 (09:00 AM)
 
   const assignments: CrisisAssignment[] = [];
   const aiExplanations: AIDecisionExplanation[] = [];
@@ -159,10 +158,10 @@ export function executeExamDayCrisisOptimization(
   // Track overflow students for alternative arrangements
   const overflowStudents: TransportRequest[] = [];
 
-  // Phase A: Primary Fleet Matching (Seats: 34)
+  // Phase A: Primary Local Fleet Matching (Seats: 34)
   for (const req of sortedRequests) {
-    const pickupName = villageMap.get(req.villageId) || 'Rampur Village';
-    const destName = instMap.get(req.destinationId) || 'Govt Polytechnic Institute';
+    const pickupName = villageMap.get(req.villageId) || 'Mulki';
+    const destName = instMap.get(req.destinationId) || 'Government Polytechnic College Mangalore';
     const passengersNeeded = req.passengerCount || 1;
 
     // Check routing accessibility from student origin to destination
@@ -184,7 +183,7 @@ export function executeExamDayCrisisOptimization(
         examSubject: req.examSubject,
         examStartTime: req.examStartTime,
         status: 'Stranded',
-        explanation: 'All connecting roadways to campus are submerged. No safe physical path exists.'
+        explanation: 'All connecting roadways to campus are submerged by river overflow. No safe physical path exists.'
       });
       aiExplanations.push({
         studentName: req.displayName,
@@ -229,16 +228,16 @@ export function executeExamDayCrisisOptimization(
         if (isLate) {
           studentStatus = 'At risk';
           atRiskCount += passengersNeeded;
-          explanation = `Boarding ${matchedVehicle.name}. Travel detour (+${studentRoute.delayMinutes}m) yields ETA ${formattedArrivalTime}, reaching campus after 09:00 AM exam gate cutoff!`;
+          explanation = `Boarding ${matchedVehicle.name}. Flood detour via Kinnigoli-Bajpe (+${studentRoute.delayMinutes}m) yields ETA ${formattedArrivalTime}, past the 09:00 AM exam gate cutoff!`;
         } else {
           studentStatus = studentRoute.isDetour ? 'Rerouted' : 'Assigned';
           rescuedCount += passengersNeeded;
-          explanation = `High Priority Exam: Boarding ${matchedVehicle.name}. Rerouted safely via Balarampur Bypass with ETA ${formattedArrivalTime} (prior to 09:00 AM exam).`;
+          explanation = `High Priority Exam: Boarding ${matchedVehicle.name}. Rerouted safely via Kateel-Bajpe Bypass with ETA ${formattedArrivalTime} (prior to 09:00 AM exam).`;
         }
       } else {
         studentStatus = studentRoute.isDetour ? 'Rerouted' : 'Assigned';
         rescuedCount += passengersNeeded;
-        explanation = `Reassigned from broken bus corridor to ${matchedVehicle.name} via ${studentRoute.isDetour ? 'Balarampur Detour' : 'Direct Road'} (ETA ${formattedArrivalTime}).`;
+        explanation = `Reassigned from broken KSRTC bus to ${matchedVehicle.name} via ${studentRoute.isDetour ? 'Kinnigoli-Bajpe Detour' : 'Direct NH-66'} (ETA ${formattedArrivalTime}).`;
       }
 
       assignments.push({
@@ -271,10 +270,10 @@ export function executeExamDayCrisisOptimization(
         studentCode: req.studentCode,
         decision: `Assigned to ${matchedVehicle.name} (${studentStatus})`,
         factorUrgency: req.hasExam ? `Exam scheduled at ${req.examStartTime || '09:00 AM'}` : 'Non-exam travel',
-        factorRoute: studentRoute.isDetour ? `Rerouted (+${studentRoute.delayMinutes}m detour)` : 'Standard corridor',
+        factorRoute: studentRoute.isDetour ? `Rerouted (+${studentRoute.delayMinutes}m via Bajpe)` : 'Standard corridor',
         factorCapacity: `${matchedVehicle.remainingSeats} seat(s) remaining after allocation`,
         aiReasoningText: req.hasExam 
-          ? `AI prioritized student seat allocation due to imminent examination deadline. Travel schedule calculated with dispatch + detour time giving ETA of ${formattedArrivalTime}.`
+          ? `AI prioritized student seat allocation due to imminent examination deadline in Mangalore. Travel schedule calculated with dispatch + detour time giving ETA of ${formattedArrivalTime}.`
           : `Allocated available secondary seat after higher-urgency exam candidates were satisfied.`
       });
     } else {
@@ -283,37 +282,32 @@ export function executeExamDayCrisisOptimization(
     }
   }
 
-  // Phase B: Overflow Students -> Structured Alternative Options
-  // 4 Concrete Alternatives:
-  // 1. Shared Auto Pool (Auto Rickshaw emergency cluster from village hub)
-  // 2. Merged Route Shuttle (feeder joining adjacent village)
-  // 3. Staggered Wave 2 Bus (leaves 08:00 AM for non-exam candidates)
-  // 4. Nearby Pickup Point Walkway (consolidated at Balarampur Crossing)
+  // Phase B: Overflow Students -> Structured Alternative Options in Dakshina Kannada
   const alternativeOptions: CrisisAlternativeOption[] = [
     {
       type: 'Shared Auto Pool',
-      title: 'Shared Auto Rickshaw Cluster (Emergency Pool)',
-      description: '3 local 6-seater autos mobilized from Rampur Market to carry urgent overflow exam students via elevated rural trail.',
+      title: 'Dakshina Kannada Auto Pool (Surathkal/Mulki Union)',
+      description: '3 local 6-seater autos mobilized from Mulki bus stand to ferry urgent overflow exam students via Kinnigoli interior roads.',
       estimatedDeparture: '07:35 AM',
-      estimatedArrival: '08:25 AM',
+      estimatedArrival: '08:40 AM',
       capacityAllocated: 4,
       assignedStudentIds: []
     },
     {
       type: 'Merged Route Shuttle',
-      title: 'Merged Rampur-Shivpur Feeder Shuttle',
-      description: 'Merges student pickups between Rampur and Shivpur into a combined express van to bypass flood bottleneck.',
+      title: 'Merged Mulki-Kinnigoli Feeder Van',
+      description: 'Merges student pickups between Mulki and Kinnigoli into a combined express van to bypass Kuloor flood bottleneck.',
       estimatedDeparture: '07:40 AM',
-      estimatedArrival: '08:35 AM',
+      estimatedArrival: '08:45 AM',
       capacityAllocated: 2,
       assignedStudentIds: []
     },
     {
       type: 'Staggered Wave Bus',
-      title: 'Staggered Wave 2 Return Bus',
-      description: 'Scheduled Wave 2 bus for regular (non-exam) students whose lectures begin at 10:30 AM.',
+      title: 'Staggered Wave 2 KSRTC Relief Bus',
+      description: 'Scheduled Wave 2 bus for regular (non-exam) students whose lectures in Mangalore begin at 10:30 AM.',
       estimatedDeparture: '08:30 AM',
-      estimatedArrival: '09:20 AM',
+      estimatedArrival: '09:35 AM',
       capacityAllocated: 2,
       assignedStudentIds: []
     }
@@ -321,11 +315,10 @@ export function executeExamDayCrisisOptimization(
 
   for (let i = 0; i < overflowStudents.length; i++) {
     const req = overflowStudents[i];
-    const pickupName = villageMap.get(req.villageId) || 'Rampur Village';
-    const destName = instMap.get(req.destinationId) || 'Govt Polytechnic Institute';
+    const pickupName = villageMap.get(req.villageId) || 'Mulki';
+    const destName = instMap.get(req.destinationId) || 'Government Polytechnic College Mangalore';
     const passengersNeeded = req.passengerCount || 1;
 
-    // Distribute into available alternative options
     let selectedAlt: CrisisAlternativeOption | null = null;
     if (i < 4) {
       selectedAlt = alternativeOptions[0]; // Shared Auto Pool
@@ -360,7 +353,7 @@ export function executeExamDayCrisisOptimization(
         status: studentStatus,
         departureTime: selectedAlt.estimatedDeparture,
         expectedArrivalTime: selectedAlt.estimatedArrival,
-        expectedTravelMinutes: 50,
+        expectedTravelMinutes: 65,
         isLateForExam: isLate,
         isDetour: true,
         alternativeOption: selectedAlt.type,
@@ -372,9 +365,9 @@ export function executeExamDayCrisisOptimization(
         studentCode: req.studentCode,
         decision: `Routed to Alternative: ${selectedAlt.type}`,
         factorUrgency: req.hasExam ? 'Urgent Exam Student' : 'General Commuter',
-        factorRoute: 'Elevated Rural Bypass Connector',
+        factorRoute: 'Kinnigoli-Kateel Interior Bypass',
         factorCapacity: 'Alternative transport resource mobilized',
-        aiReasoningText: `Primary fleet capacity (34 seats) was saturated. AI activated secondary rural contingency (${selectedAlt.type}) to prevent total student stranding.`
+        aiReasoningText: `Primary fleet capacity (34 seats) was saturated. AI activated secondary rural contingency (${selectedAlt.type}) to prevent student stranding.`
       });
     } else {
       // True capacity limit reached across both fleet and emergency autos
@@ -412,16 +405,16 @@ export function executeExamDayCrisisOptimization(
   const beforeAfter: BeforeAfterComparison = {
     before: {
       totalStudents: 30, // Baseline before crisis
-      availableBuses: 6, // 2 Govt Buses + 4 Local Fleet
-      totalSeats: 94,    // 32 + 28 + 34 = 94 seats
+      availableBuses: 6, // 2 KSRTC Buses + 4 Local Fleet
+      totalSeats: 121,   // 45 + 42 + 34 = 121 seats
       onTimeStudents: 30, // All reached on time normally
       atRiskStudents: 0,
       strandedStudents: 0,
-      busUtilizationPercent: Math.round((30 / 94) * 100) // 32%
+      busUtilizationPercent: Math.round((30 / 121) * 100) // ~25%
     },
     after: {
       totalStudents: totalDemand, // 42 (+40%)
-      availableBuses: 4,          // 2 Govt buses down -> 4 fleet left
+      availableBuses: 4,          // 2 KSRTC buses broken down -> 4 fleet left
       totalSeats: totalAvailableSeats, // 34
       onTimeStudents: rescuedCount,
       atRiskStudents: atRiskCount,

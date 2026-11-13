@@ -1,92 +1,132 @@
 import { RoadSegment, RoutePathResult } from '../types';
 
 /**
- * Predefined realistic rural road network connecting villages and institutions.
- * Nodes:
- * - vil-1: Rampur Village
- * - vil-2: Shivpur Hamlet
- * - vil-3: Kishanpur Cross
- * - vil-4: Balarampur Junction
- * - inst-1: Government Polytechnic Institute
- * - inst-2: District Higher Secondary School
+ * =====================================================================
+ * ROAD NETWORK GRAPH — MANGALORE & DAKSHINA KANNADA (KARNATAKA)
+ * =====================================================================
+ * Models real highways and bypass links:
+ * - NH-66 Coastal Highway (Mulki -> Surathkal -> Kuloor -> Mangalore City)
+ * - Major Flood Blockage target: Kuloor River Bridge overflow on NH-66
+ * - Alternative Detour via Bajpe / Kinnigoli / Kavoor interior bypass
  */
 export const ROAD_NETWORK: RoadSegment[] = [
-  // 1. Direct route from Rampur to Govt Polytechnic (Major artery via Canal Bridge)
+  // 1. NH-66 Direct Artery (Mulki to Kadri Polytechnic via Kuloor Bridge)
+  // This is the major route that gets blocked by Gurupura/Kuloor river flooding
   {
-    id: 'road-rampur-poly-direct',
-    fromNodeId: 'vil-1',
+    id: 'road-nh66-mulki-poly-direct',
+    fromNodeId: 'vil-mulki',
     toNodeId: 'inst-1',
-    name: 'Rampur-Polytechnic Canal Road',
-    distanceKm: 8.5,
-    normalTravelMinutes: 20,
+    name: 'NH-66 Coastal Highway (via Kuloor Bridge)',
+    distanceKm: 28.0,
+    normalTravelMinutes: 38,
     isBlocked: false,
     blockageReason: undefined
   },
-  // 2. Rampur to Shivpur Hamlet
+  // 2. Mulki to Kinnigoli
   {
-    id: 'road-rampur-shivpur',
-    fromNodeId: 'vil-1',
-    toNodeId: 'vil-2',
-    name: 'Rampur-Shivpur Link Road',
-    distanceKm: 4.0,
-    normalTravelMinutes: 10,
-    isBlocked: false
-  },
-  // 3. Shivpur to Balarampur Junction
-  {
-    id: 'road-shivpur-balarampur',
-    fromNodeId: 'vil-2',
-    toNodeId: 'vil-4',
-    name: 'Shivpur-Balarampur Connector',
-    distanceKm: 6.0,
-    normalTravelMinutes: 12,
-    isBlocked: false
-  },
-  // 4. Balarampur Junction to Govt Polytechnic (Bypass Highway)
-  {
-    id: 'road-balarampur-poly',
-    fromNodeId: 'vil-4',
-    toNodeId: 'inst-1',
-    name: 'Balarampur Highway Bypass',
-    distanceKm: 11.5,
-    normalTravelMinutes: 23,
-    isBlocked: false
-  },
-  // 5. Rampur to Kishanpur Cross
-  {
-    id: 'road-rampur-kishanpur',
-    fromNodeId: 'vil-1',
-    toNodeId: 'vil-3',
-    name: 'East Rampur Crossway',
-    distanceKm: 5.5,
+    id: 'road-mulki-kinnigoli',
+    fromNodeId: 'vil-mulki',
+    toNodeId: 'vil-kinnigoli',
+    name: 'Mulki-Kinnigoli State Road',
+    distanceKm: 9.0,
     normalTravelMinutes: 14,
     isBlocked: false
   },
-  // 6. Kishanpur Cross to District Higher Secondary
+  // 3. Kinnigoli to Kateel
   {
-    id: 'road-kishanpur-sec',
-    fromNodeId: 'vil-3',
-    toNodeId: 'inst-2',
-    name: 'Kishanpur School Road',
-    distanceKm: 7.0,
+    id: 'road-kinnigoli-kateel',
+    fromNodeId: 'vil-kinnigoli',
+    toNodeId: 'vil-kateel',
+    name: 'Kinnigoli-Kateel Road',
+    distanceKm: 6.5,
+    normalTravelMinutes: 11,
+    isBlocked: false
+  },
+  // 4. Kateel to Bajpe
+  {
+    id: 'road-kateel-bajpe',
+    fromNodeId: 'vil-kateel',
+    toNodeId: 'vil-bajpe',
+    name: 'Kateel-Bajpe Airport Connector',
+    distanceKm: 12.0,
+    normalTravelMinutes: 18,
+    isBlocked: false
+  },
+  // 5. Bajpe to Govt Polytechnic Kadri (Mangalore) via Kavoor
+  {
+    id: 'road-bajpe-kadri',
+    fromNodeId: 'vil-bajpe',
+    toNodeId: 'inst-1',
+    name: 'Bajpe-Kavoor-Kadri Airport Road Bypass',
+    distanceKm: 14.5,
+    normalTravelMinutes: 22,
+    isBlocked: false
+  },
+  // 6. Mulki to Surathkal (NH-66 northern link)
+  {
+    id: 'road-mulki-surathkal',
+    fromNodeId: 'vil-mulki',
+    toNodeId: 'vil-surathkal',
+    name: 'NH-66 Mulki-Surathkal Section',
+    distanceKm: 11.0,
     normalTravelMinutes: 16,
     isBlocked: false
   },
-  // 7. Kishanpur Cross to Govt Polytechnic
+  // 7. Surathkal to NITK (inst-2)
   {
-    id: 'road-kishanpur-poly',
-    fromNodeId: 'vil-3',
+    id: 'road-surathkal-nitk',
+    fromNodeId: 'vil-surathkal',
+    toNodeId: 'inst-2',
+    name: 'Surathkal-NITK Beach Link',
+    distanceKm: 2.0,
+    normalTravelMinutes: 5,
+    isBlocked: false
+  },
+  // 8. Moodbidri to Vamanjoor (NH-169)
+  {
+    id: 'road-moodbidri-vamanjoor',
+    fromNodeId: 'vil-moodbidri',
+    toNodeId: 'vil-vamanjoor',
+    name: 'NH-169 Gurupura-Moodbidri Road',
+    distanceKm: 22.0,
+    normalTravelMinutes: 32,
+    isBlocked: false
+  },
+  // 9. Vamanjoor to Kadri Polytechnic (inst-1)
+  {
+    id: 'road-vamanjoor-kadri',
+    fromNodeId: 'vil-vamanjoor',
     toNodeId: 'inst-1',
-    name: 'Kishanpur Polytechnic Connector',
-    distanceKm: 9.0,
-    normalTravelMinutes: 22,
+    name: 'Vamanjoor-Kadri Hills Link',
+    distanceKm: 7.0,
+    normalTravelMinutes: 13,
+    isBlocked: false
+  },
+  // 10. Farangipete to St. Aloysius (inst-3)
+  {
+    id: 'road-farangipete-city',
+    fromNodeId: 'vil-farangipete',
+    toNodeId: 'inst-3',
+    name: 'NH-73 Netravathi Valley Highway',
+    distanceKm: 15.0,
+    normalTravelMinutes: 25,
+    isBlocked: false
+  },
+  // 11. Ullal to St. Aloysius (inst-3) via Thokkottu
+  {
+    id: 'road-ullal-thokkottu-city',
+    fromNodeId: 'vil-ullal',
+    toNodeId: 'inst-3',
+    name: 'Netravathi Bridge South Approach',
+    distanceKm: 10.0,
+    normalTravelMinutes: 18,
     isBlocked: false
   }
 ];
 
 /**
- * Dijkstra's Shortest Path Algorithm for rural transit routing.
- * Accounts for blocked road segments (e.g. flooded canal bridge).
+ * Dijkstra's Shortest Path Algorithm for rural transit routing in Dakshina Kannada.
+ * Accounts for blocked road segments (e.g. flooded Kuloor bridge on NH-66).
  */
 export function findShortestRoute(
   startNodeId: string,
@@ -94,7 +134,6 @@ export function findShortestRoute(
   roadNetwork: RoadSegment[],
   avoidBlockedRoads: boolean = true
 ): RoutePathResult {
-  // Build adjacency graph (bidirectional roads)
   const graph: Record<string, { neighborId: string; duration: number; distance: number; segment: RoadSegment }[]> = {};
 
   for (const road of roadNetwork) {
@@ -120,12 +159,10 @@ export function findShortestRoute(
     });
   }
 
-  // Priority Queue / Dijkstra distances
   const distances: Record<string, number> = {};
   const previous: Record<string, { nodeId: string; segment: RoadSegment; distanceKm: number } | null> = {};
   const unvisited = new Set<string>();
 
-  // Initialize nodes
   for (const road of roadNetwork) {
     distances[road.fromNodeId] = Infinity;
     distances[road.toNodeId] = Infinity;
@@ -138,7 +175,6 @@ export function findShortestRoute(
   distances[startNodeId] = 0;
 
   while (unvisited.size > 0) {
-    // Find node with minimum distance in unvisited
     let currNode: string | null = null;
     let minDistance = Infinity;
 
@@ -166,7 +202,6 @@ export function findShortestRoute(
     }
   }
 
-  // If target not reached
   if (distances[targetNodeId] === Infinity) {
     return {
       pathNodeIds: [],
@@ -179,7 +214,6 @@ export function findShortestRoute(
     };
   }
 
-  // Reconstruct path
   const pathNodeIds: string[] = [];
   const pathSegmentNames: string[] = [];
   let totalDistanceKm = 0;
@@ -194,7 +228,7 @@ export function findShortestRoute(
   }
   if (curr) pathNodeIds.unshift(curr);
 
-  // Compare with unblocked normal route to detect detour and delay
+  // Compare with normal unblocked route to compute detour delay
   const normalUnblockedRoute = findUnblockedBaselineRoute(startNodeId, targetNodeId, roadNetwork);
   const normalMinutes = normalUnblockedRoute.totalDurationMinutes;
   const detourDelayMinutes = Math.max(0, distances[targetNodeId] - normalMinutes);
@@ -211,17 +245,13 @@ export function findShortestRoute(
   };
 }
 
-/**
- * Calculates theoretical normal baseline without any blockages
- */
 function findUnblockedBaselineRoute(
   startNodeId: string,
   targetNodeId: string,
   roadNetwork: RoadSegment[]
 ): { totalDurationMinutes: number } {
-  // If Rampur to Polytechnic direct
-  if (startNodeId === 'vil-1' && targetNodeId === 'inst-1') {
-    return { totalDurationMinutes: 20 };
+  if (startNodeId === 'vil-mulki' && targetNodeId === 'inst-1') {
+    return { totalDurationMinutes: 38 }; // Direct NH-66 via Kuloor bridge
   }
-  return { totalDurationMinutes: 25 };
+  return { totalDurationMinutes: 30 };
 }

@@ -31,40 +31,42 @@ const createCustomIcon = (color: string, label: string) => {
   });
 };
 
-const villageIcon = createCustomIcon('#16a34a', '🏡 Village');
+const villageIcon = createCustomIcon('#16a34a', '🏡 Village/Town');
 const institutionIcon = createCustomIcon('#2563eb', '🎓 Campus');
-const hazardIcon = createCustomIcon('#dc2626', '⛔ Flooded Bridge');
+const hazardIcon = createCustomIcon('#dc2626', '⛔ Kuloor Bridge Flooded');
 
 interface RouteMapProps {
   isFlooded?: boolean;
 }
 
 export const LiveTransitMap: React.FC<RouteMapProps> = ({ isFlooded = true }) => {
-  // Center of our rural Lucknow-Sitapur corridor
-  const center: [number, number] = [26.858, 80.950];
+  // Center around Mangalore / Dakshina Kannada coastal corridor
+  const center: [number, number] = [12.980, 74.860];
 
-  // Route Coordinates:
-  // 1. Direct Canal Route (Rampur [26.8467, 80.9462] -> Govt Poly [26.8700, 80.9700])
+  // Coordinates:
+  // 1. Direct NH-66 Coastal Route (Mulki [13.0906, 74.7925] -> Surathkal [13.0076, 74.7958] -> Kuloor Bridge [12.9150, 74.8320] -> Kadri Poly [12.8875, 74.8562])
   const directRouteCoords: [number, number][] = [
-    [26.8467, 80.9462], // Rampur Village
-    [26.8580, 80.9580], // Canal Bridge checkpoint
-    [26.8700, 80.9700]  // Govt Polytechnic
+    [13.0906, 74.7925], // Mulki
+    [13.0076, 74.7958], // Surathkal
+    [12.9150, 74.8320], // Kuloor Bridge (Flooded)
+    [12.8875, 74.8562]  // Kadri Polytechnic
   ];
 
-  // 2. Active Detour via Shivpur & Balarampur Bypass
+  // 2. Safe Detour via Kinnigoli -> Kateel -> Bajpe -> Kavoor -> Kadri
   const detourRouteCoords: [number, number][] = [
-    [26.8467, 80.9462], // Rampur Village
-    [26.8520, 80.9310], // Shivpur Hamlet
-    [26.8390, 80.9200], // Balarampur Junction
-    [26.8610, 80.9400], // Bypass Expressway Link
-    [26.8700, 80.9700]  // Govt Polytechnic
+    [13.0906, 74.7925], // Mulki
+    [13.1167, 74.8667], // Kinnigoli
+    [13.0833, 74.8500], // Kateel
+    [12.9667, 74.8833], // Bajpe
+    [12.9250, 74.8680], // Kavoor
+    [12.8875, 74.8562]  // Kadri Polytechnic
   ];
 
   return (
     <div className="w-full h-80 sm:h-96 rounded-2xl overflow-hidden border border-slate-200 shadow-md relative z-10">
       <MapContainer 
         center={center} 
-        zoom={13} 
+        zoom={11} 
         scrollWheelZoom={false}
         style={{ height: '100%', width: '100%' }}
       >
@@ -73,50 +75,50 @@ export const LiveTransitMap: React.FC<RouteMapProps> = ({ isFlooded = true }) =>
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {/* Villages */}
+        {/* Villages & Towns in Dakshina Kannada */}
         {DEMO_VILLAGES.map((v: Village) => (
           <Marker 
             key={v.id} 
-            position={[v.coordinates?.lat || 26.8467, v.coordinates?.lng || 80.9462]}
+            position={[v.coordinates?.lat || 12.980, v.coordinates?.lng || 74.850]}
             icon={villageIcon}
           >
             <Popup>
               <div className="text-xs font-sans space-y-1">
                 <strong className="text-slate-900 block text-sm">{v.name}</strong>
-                <p className="text-slate-500">Student Pickup Hub</p>
+                <p className="text-slate-500">Dakshina Kannada Transit Hub</p>
                 <span className="text-[10px] bg-emerald-50 text-emerald-800 font-bold px-2 py-0.5 rounded border border-emerald-200">
-                  Active Waiting Shelter
+                  Student Pickup Center
                 </span>
               </div>
             </Popup>
           </Marker>
         ))}
 
-        {/* Institutions */}
+        {/* Educational Institutions */}
         {DEMO_INSTITUTIONS.map((inst: Institution) => (
           <Marker 
             key={inst.id} 
-            position={[inst.coordinates?.lat || 26.8700, inst.coordinates?.lng || 80.9700]}
+            position={[inst.coordinates?.lat || 12.8875, inst.coordinates?.lng || 74.8562]}
             icon={institutionIcon}
           >
             <Popup>
               <div className="text-xs font-sans space-y-1">
                 <strong className="text-slate-900 block text-sm">{inst.name}</strong>
-                <p className="text-slate-500">Destination Examination Center</p>
+                <p className="text-slate-500">Destination Campus & Exam Hall</p>
                 <span className="text-[10px] bg-blue-50 text-blue-800 font-bold px-2 py-0.5 rounded border border-blue-200">
-                  Exam Timing: 09:00 AM
+                  Semester Exams: 09:00 AM / 10:30 AM
                 </span>
               </div>
             </Popup>
           </Marker>
         ))}
 
-        {/* Hazard Marker at Canal Spillway */}
+        {/* Hazard Marker at Kuloor River Bridge */}
         {isFlooded && (
-          <Marker position={[26.8580, 80.9580]} icon={hazardIcon}>
+          <Marker position={[12.9150, 74.8320]} icon={hazardIcon}>
             <Popup>
               <div className="text-xs font-sans text-red-700 font-bold">
-                ⚠️ Canal Bridge Spillway Overflow (Closed by Police)
+                ⚠️ NH-66 Kuloor River Bridge Submerged (Traffic Diverted)
               </div>
             </Popup>
           </Marker>
@@ -133,11 +135,11 @@ export const LiveTransitMap: React.FC<RouteMapProps> = ({ isFlooded = true }) =>
           }}
         >
           <Tooltip sticky>
-            {isFlooded ? '⛔ Direct Canal Road (Flooded & Impassable)' : 'Direct Canal Road (Normal: 20 mins)'}
+            {isFlooded ? '⛔ Direct NH-66 via Kuloor Bridge (Flooded & Impassable)' : 'NH-66 Coastal Highway (Normal: 38 mins)'}
           </Tooltip>
         </Polyline>
 
-        {/* Detour Route Line: Solid Emerald/Blue */}
+        {/* Detour Route Line via Kinnigoli & Bajpe */}
         {isFlooded && (
           <Polyline
             positions={detourRouteCoords}
@@ -148,7 +150,7 @@ export const LiveTransitMap: React.FC<RouteMapProps> = ({ isFlooded = true }) =>
             }}
           >
             <Tooltip sticky>
-              ✅ Active Detour via Balarampur Bypass (45 mins, 21.5 km)
+              ✅ Active Detour via Kinnigoli ➔ Kateel ➔ Bajpe Airport Road (65 mins)
             </Tooltip>
           </Polyline>
         )}
@@ -156,14 +158,14 @@ export const LiveTransitMap: React.FC<RouteMapProps> = ({ isFlooded = true }) =>
 
       {/* Map Floating Legend */}
       <div className="absolute bottom-3 left-3 bg-white/95 backdrop-blur-md px-3.5 py-2.5 rounded-xl shadow-lg border border-slate-200 text-[11px] font-sans space-y-1.5 z-[1000]">
-        <div className="font-extrabold text-slate-800 uppercase tracking-wider text-[10px]">Transit Corridor Legend</div>
+        <div className="font-extrabold text-slate-800 uppercase tracking-wider text-[10px]">Mangalore Corridor Legend</div>
         <div className="flex items-center space-x-2">
           <span className="w-3.5 h-1 bg-emerald-600 rounded"></span>
-          <span className="text-slate-700 font-medium">Balarampur Safe Detour (45m)</span>
+          <span className="text-slate-700 font-medium">Kateel-Bajpe Safe Detour (65m)</span>
         </div>
         <div className="flex items-center space-x-2">
           <span className="w-3.5 h-1 bg-red-500 border-dashed rounded"></span>
-          <span className="text-slate-700 font-medium">Blocked Canal Road (Flooded)</span>
+          <span className="text-slate-700 font-medium">Blocked Kuloor Bridge (NH-66 Flooded)</span>
         </div>
       </div>
     </div>

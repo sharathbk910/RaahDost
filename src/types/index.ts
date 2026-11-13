@@ -51,6 +51,9 @@ export interface Vehicle {
   contactNumber?: string;
   driverName?: string;
   currentSpeedKmH?: number;
+  stops?: string[];
+  departureTimes?: string[];
+  routeName?: string;
 }
 
 export interface TransportRequest {
