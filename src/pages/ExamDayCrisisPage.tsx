@@ -19,6 +19,7 @@ import {
 import { db } from '../services/dataStore';
 import { executeExamDayCrisisOptimization } from '../algorithms/examCrisisEngine';
 import { CrisisSimulationResult } from '../types';
+import { LiveTransitMap } from '../components/map/LiveTransitMap';
 
 interface Props {
   navigate: (route: string) => void;
@@ -282,6 +283,18 @@ export const ExamDayCrisisPage: React.FC<Props> = ({ navigate }) => {
             </div>
           </div>
 
+          {/* Live OpenStreetMap Interactive Route Map */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center space-x-1.5">
+                <MapPin className="w-3.5 h-3.5 text-brand-600" />
+                <span>Geographic Map: Flooded Bridge Hazard & Active Detour Line</span>
+              </h3>
+              <span className="text-[11px] text-slate-500">Live OpenStreetMap Leaflet Engine</span>
+            </div>
+            <LiveTransitMap isFlooded={true} />
+          </div>
+
           {/* Flooded Road Dijkstra Routing Comparison Box */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-3">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -479,3 +492,4 @@ export const ExamDayCrisisPage: React.FC<Props> = ({ navigate }) => {
     </div>
   );
 };
+

@@ -16,6 +16,7 @@ import {
 import { db } from '../services/dataStore';
 import { calculateAllocations } from '../algorithms/matchingEngine';
 import { AllocationResult } from '../types';
+import { LiveTransitMap } from '../components/map/LiveTransitMap';
 
 interface Props {
   navigate: (route: string) => void;
@@ -201,6 +202,14 @@ export const RouteRescue: React.FC<Props> = ({ navigate }) => {
         <p className="text-sm text-slate-600 bg-slate-50 p-4 rounded-xl border border-slate-200">
           <strong className="text-slate-800">Situation Brief:</strong> {selectedDisruption?.description}
         </p>
+
+        {/* Live Geographic Map Integration */}
+        <div className="pt-2">
+          <div className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center space-x-1.5">
+            <span>🗺️ Corridor Map (Pickup Hubs & Polytechnic Destination)</span>
+          </div>
+          <LiveTransitMap isFlooded={false} />
+        </div>
       </div>
 
       {/* Dynamic Vehicle Capacity Controls (Demonstrates Reallocation) */}
