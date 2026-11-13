@@ -33,7 +33,7 @@ export interface Student {
   destinationId: string;
   hasExam?: boolean;
   examSubject?: string;
-  examStartTime?: string; // e.g. "09:00 AM"
+  examStartTime?: string;
   originalBusId?: string;
 }
 
@@ -68,7 +68,7 @@ export interface TransportRequest {
   // Crisis mode metadata
   hasExam?: boolean;
   examSubject?: string;
-  examStartTime?: string; // ISO or "09:00 AM"
+  examStartTime?: string; // e.g. "09:00 AM"
   minutesToExam?: number;
   originalBusId?: string;
   isSurgeStudent?: boolean;
@@ -111,12 +111,27 @@ export interface RoutePathResult {
 }
 
 export type CrisisStudentStatus = 
-  | 'Successfully Reassigned'
-  | 'Examination Priority'
-  | 'Expected to Arrive Late'
-  | 'Awaiting Confirmation'
-  | 'No Vehicle Available'
-  | 'No Feasible Route';
+  | 'Assigned'
+  | 'Rerouted'
+  | 'At risk'
+  | 'Alternative Arranged'
+  | 'Stranded';
+
+export type AlternativeOptionType = 
+  | 'Shared Auto Pool'
+  | 'Staggered Wave Bus'
+  | 'Merged Route Shuttle'
+  | 'Nearby Pickup Point Walkway';
+
+export interface CrisisAlternativeOption {
+  type: AlternativeOptionType;
+  title: string;
+  description: string;
+  estimatedDeparture: string;
+  estimatedArrival: string;
+  capacityAllocated: number;
+  assignedStudentIds: string[];
+}
 
 export interface CrisisAssignment {
   requestId: string;
@@ -140,7 +155,39 @@ export interface CrisisAssignment {
   expectedTravelMinutes?: number;
   isLateForExam?: boolean;
   isDetour?: boolean;
+  alternativeOption?: AlternativeOptionType;
   explanation: string;
+}
+
+export interface BeforeAfterComparison {
+  before: {
+    totalStudents: number;
+    availableBuses: number;
+    totalSeats: number;
+    onTimeStudents: number;
+    atRiskStudents: number;
+    strandedStudents: number;
+    busUtilizationPercent: number;
+  };
+  after: {
+    totalStudents: number;
+    availableBuses: number;
+    totalSeats: number;
+    onTimeStudents: number;
+    atRiskStudents: number;
+    strandedStudents: number;
+    busUtilizationPercent: number;
+  };
+}
+
+export interface AIDecisionExplanation {
+  studentName: string;
+  studentCode: string;
+  decision: string;
+  factorUrgency: string;
+  factorRoute: string;
+  factorCapacity: string;
+  aiReasoningText: string;
 }
 
 export interface CrisisSimulationResult {
@@ -154,8 +201,9 @@ export interface CrisisSimulationResult {
   totalAvailableSeats: number;
   examStudentsCount: number;
   rescuedCount: number;
-  lateArrivalCount: number;
-  unassignedCount: number;
+  atRiskCount: number;
+  strandedCount: number;
+  alternativeAssignedCount: number;
   blockedRoad: RoadSegment;
   alternativeRouteSummary: {
     originalPath: string;
@@ -165,6 +213,9 @@ export interface CrisisSimulationResult {
     delayMinutes: number;
   };
   assignments: CrisisAssignment[];
+  alternativeOptions: CrisisAlternativeOption[];
+  beforeAfter: BeforeAfterComparison;
+  aiExplanations: AIDecisionExplanation[];
   vehicleUsage: {
     vehicleId: string;
     vehicleName: string;

@@ -9,16 +9,19 @@ import {
   Users, 
   RotateCcw, 
   CheckCircle2, 
+  ShieldAlert, 
+  Sparkles, 
+  Layers, 
+  ArrowRight, 
+  MapPin, 
   ChevronRight,
-  ShieldAlert,
-  ArrowRight,
-  MapPin,
-  Calendar,
-  AlertTriangle
+  HelpCircle,
+  BrainCircuit,
+  Compass
 } from 'lucide-react';
 import { db } from '../services/dataStore';
 import { executeExamDayCrisisOptimization } from '../algorithms/examCrisisEngine';
-import { CrisisSimulationResult } from '../types';
+import { CrisisSimulationResult, CrisisStudentStatus } from '../types';
 import { LiveTransitMap } from '../components/map/LiveTransitMap';
 
 interface Props {
@@ -28,10 +31,11 @@ interface Props {
 export const ExamDayCrisisPage: React.FC<Props> = ({ navigate }) => {
   const [crisisState, setCrisisState] = useState<CrisisSimulationResult | null>(db.getCrisisSimulation());
   const [isProcessing, setIsProcessing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'all' | 'exam' | 'unassigned' | 'late'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'exam' | 'rerouted' | 'atRisk' | 'alternatives' | 'stranded'>('all');
   const [confirmationNotice, setConfirmationNotice] = useState<string | null>(null);
+  const [selectedStudentExplanation, setSelectedStudentExplanation] = useState<string | null>(null);
 
-  // Trigger Crisis Mode Activation (Runs all 4 events simultaneously)
+  // One-Click "Trigger Exam Day Crisis" action
   const handleActivateCrisis = () => {
     setIsProcessing(true);
 
@@ -54,8 +58,8 @@ export const ExamDayCrisisPage: React.FC<Props> = ({ navigate }) => {
       setCrisisState(result);
       db.saveCrisisSimulation(result);
       setIsProcessing(false);
-      setConfirmationNotice('🚨 THE EXAM DAY CRISIS ACTIVATED: 2 Buses failed, 40% demand surge (+12 students), Canal road blocked, Dijkstra detour computed, and Exam priorities assigned!');
-    }, 400);
+      setConfirmationNotice('🚨 THE EXAM DAY CRISIS ACTIVATED: 2 Government Buses failed, +40% surge demand (+12 students), Canal Road flood rerouting computed via Dijkstra, and 2-Hour Exam Prioritization executed!');
+    }, 350);
   };
 
   const handleConfirmPlan = () => {
@@ -64,36 +68,32 @@ export const ExamDayCrisisPage: React.FC<Props> = ({ navigate }) => {
     const confirmed: CrisisSimulationResult = {
       ...crisisState,
       isConfirmed: true,
-      confirmedAt: new Date().toLocaleTimeString(),
-      assignments: crisisState.assignments.map(a => ({
-        ...a,
-        status: a.status === 'Successfully Reassigned' || a.status === 'Examination Priority'
-          ? 'Successfully Reassigned'
-          : a.status
-      }))
+      confirmedAt: new Date().toLocaleTimeString()
     };
 
     setCrisisState(confirmed);
     db.saveCrisisSimulation(confirmed);
-    setConfirmationNotice('✅ Emergency Crisis Transport Plan Officially Approved by Chief Institutional Administrator.');
+    setConfirmationNotice('✅ Emergency Transport Plan Officially Approved by Chief Institutional Administrator.');
   };
 
   const handleResetScenario = () => {
     db.saveCrisisSimulation(null);
     setCrisisState(null);
-    setConfirmationNotice('Scenario reset: Normal operational baseline restored.');
+    setConfirmationNotice('Normal baseline restored. Crisis simulation reset.');
   };
 
   const filteredAssignments = crisisState?.assignments.filter(a => {
     if (activeTab === 'exam') return a.hasExam;
-    if (activeTab === 'unassigned') return a.status === 'No Vehicle Available' || a.status === 'No Feasible Route';
-    if (activeTab === 'late') return a.status === 'Expected to Arrive Late';
+    if (activeTab === 'rerouted') return a.status === 'Rerouted';
+    if (activeTab === 'atRisk') return a.status === 'At risk';
+    if (activeTab === 'alternatives') return a.status === 'Alternative Arranged';
+    if (activeTab === 'stranded') return a.status === 'Stranded';
     return true;
   }) || [];
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Hero Header */}
+      {/* 1. Header Banner with One-Click Trigger Button */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-red-950 via-slate-900 to-amber-950 p-6 sm:p-8 text-white shadow-2xl border border-red-800/40">
         <div className="absolute top-0 right-0 -mt-10 -mr-10 w-96 h-96 bg-red-600/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -119,7 +119,7 @@ export const ExamDayCrisisPage: React.FC<Props> = ({ navigate }) => {
                 className="px-6 py-4 rounded-2xl bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-black text-sm shadow-xl shadow-red-600/30 flex items-center space-x-2.5 transition-transform active:scale-95 disabled:opacity-50"
               >
                 <AlertOctagon className="w-5 h-5 text-white animate-spin" />
-                <span>{isProcessing ? 'Optimizing Crisis...' : 'Trigger Exam Day Crisis (All 4 Events)'}</span>
+                <span>{isProcessing ? 'Optimizing Crisis...' : 'Trigger Exam Day Crisis'}</span>
               </button>
             ) : (
               <div className="flex items-center space-x-2">
@@ -163,27 +163,113 @@ export const ExamDayCrisisPage: React.FC<Props> = ({ navigate }) => {
         </div>
       )}
 
-      {/* 4 Crisis Events Breakdown Banner */}
+      {/* 2. Before vs After Crisis Dashboard */}
+      {crisisState && (
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+            <div>
+              <h2 className="text-lg font-black text-slate-900 flex items-center space-x-2">
+                <Layers className="w-5 h-5 text-brand-600" />
+                <span>Before vs After Crisis Impact Matrix</span>
+              </h2>
+              <p className="text-xs text-slate-500">Live operational comparison of baseline vs post-crisis reallocation.</p>
+            </div>
+            <span className="text-xs font-bold px-3 py-1 bg-amber-50 text-amber-800 border border-amber-200 rounded-full">
+              Post-Crisis Optimization Active
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+            {/* Before Card */}
+            <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+              <div className="flex justify-between items-center border-b border-slate-200 pb-2">
+                <span className="font-bold text-slate-700 text-xs uppercase tracking-wider">Before Crisis (Normal Baseline)</span>
+                <span className="text-[10px] bg-slate-200 text-slate-700 px-2 py-0.5 rounded font-bold">Standard Morning</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="bg-white p-2.5 rounded-xl border border-slate-200">
+                  <span className="text-[10px] text-slate-400 font-bold block">STUDENT DEMAND</span>
+                  <span className="text-xl font-black text-slate-800">{crisisState.beforeAfter.before.totalStudents}</span>
+                </div>
+                <div className="bg-white p-2.5 rounded-xl border border-slate-200">
+                  <span className="text-[10px] text-slate-400 font-bold block">REACHING ON TIME</span>
+                  <span className="text-xl font-black text-emerald-600">{crisisState.beforeAfter.before.onTimeStudents}</span>
+                </div>
+                <div className="bg-white p-2.5 rounded-xl border border-slate-200">
+                  <span className="text-[10px] text-slate-400 font-bold block">STRANDED</span>
+                  <span className="text-xl font-black text-slate-400">0</span>
+                </div>
+              </div>
+              <div className="text-xs text-slate-600 space-y-1">
+                <div className="flex justify-between">
+                  <span>Active Buses / Fleet:</span>
+                  <span className="font-bold">{crisisState.beforeAfter.before.availableBuses} Buses (94 Total Seats)</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Fleet Utilization:</span>
+                  <span className="font-bold text-slate-700">{crisisState.beforeAfter.before.busUtilizationPercent}% (Normal Load)</span>
+                </div>
+              </div>
+            </div>
+
+            {/* After Card */}
+            <div className="p-5 rounded-2xl bg-red-50/70 border-2 border-red-200 space-y-3">
+              <div className="flex justify-between items-center border-b border-red-200 pb-2">
+                <span className="font-bold text-red-900 text-xs uppercase tracking-wider">After Crisis (Exam Day Crisis Response)</span>
+                <span className="text-[10px] bg-red-600 text-white px-2 py-0.5 rounded font-bold">4 Simultaneous Events</span>
+              </div>
+              <div className="grid grid-cols-4 gap-1.5 text-center">
+                <div className="bg-white p-2 rounded-xl border border-red-200">
+                  <span className="text-[9px] text-slate-500 font-bold block">TOTAL SURGE</span>
+                  <span className="text-lg font-black text-slate-900">{crisisState.totalDemand}</span>
+                </div>
+                <div className="bg-white p-2 rounded-xl border border-emerald-200">
+                  <span className="text-[9px] text-emerald-700 font-bold block">RESCUED</span>
+                  <span className="text-lg font-black text-emerald-600">{crisisState.rescuedCount}</span>
+                </div>
+                <div className="bg-white p-2 rounded-xl border border-amber-200">
+                  <span className="text-[9px] text-amber-700 font-bold block">AT RISK</span>
+                  <span className="text-lg font-black text-amber-600">{crisisState.atRiskCount}</span>
+                </div>
+                <div className="bg-white p-2 rounded-xl border border-red-200">
+                  <span className="text-[9px] text-red-700 font-bold block">STRANDED</span>
+                  <span className="text-lg font-black text-red-600">{crisisState.strandedCount}</span>
+                </div>
+              </div>
+              <div className="text-xs text-red-900 space-y-1">
+                <div className="flex justify-between">
+                  <span>Remaining Usable Fleet:</span>
+                  <span className="font-bold">{crisisState.availableVehicles.length} Vehicles ({crisisState.totalAvailableSeats} Seats)</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Fleet Utilization:</span>
+                  <span className="font-bold text-red-700">100% Maximum Certified Capacity</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. The 4 Events Overview Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Event 1 Card */}
         <div className={`p-4 rounded-2xl border transition-all ${
           crisisState ? 'bg-red-50 border-red-200' : 'bg-white border-slate-200'
         }`}>
           <div className="flex items-center space-x-2 text-red-600">
             <AlertOctagon className="w-5 h-5 flex-shrink-0" />
-            <h3 className="text-xs font-black uppercase tracking-wider">Event 1: Bus Breakdowns</h3>
+            <h3 className="text-xs font-black uppercase tracking-wider">Event 1: 2 Bus Breakdowns</h3>
           </div>
           <p className="text-xs text-slate-600 mt-2 font-medium">
-            2 Government buses failed (UPSRTC #1001 & #1002). 60 total capacity eliminated.
+            UPSRTC Buses #1001 & #1002 failed. 60 government passenger seats removed.
           </p>
           <span className={`inline-block mt-2 text-[10px] font-black uppercase px-2 py-0.5 rounded ${
             crisisState ? 'bg-red-600 text-white' : 'bg-slate-100 text-slate-600'
           }`}>
-            {crisisState ? '2 Buses Unavailable' : 'Standby'}
+            {crisisState ? '2 Buses Disabled' : 'Standby'}
           </span>
         </div>
 
-        {/* Event 2 Card */}
         <div className={`p-4 rounded-2xl border transition-all ${
           crisisState ? 'bg-amber-50 border-amber-200' : 'bg-white border-slate-200'
         }`}>
@@ -201,7 +287,6 @@ export const ExamDayCrisisPage: React.FC<Props> = ({ navigate }) => {
           </span>
         </div>
 
-        {/* Event 3 Card */}
         <div className={`p-4 rounded-2xl border transition-all ${
           crisisState ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-200'
         }`}>
@@ -219,7 +304,6 @@ export const ExamDayCrisisPage: React.FC<Props> = ({ navigate }) => {
           </span>
         </div>
 
-        {/* Event 4 Card */}
         <div className={`p-4 rounded-2xl border transition-all ${
           crisisState ? 'bg-purple-50 border-purple-200' : 'bg-white border-slate-200'
         }`}>
@@ -228,7 +312,7 @@ export const ExamDayCrisisPage: React.FC<Props> = ({ navigate }) => {
             <h3 className="text-xs font-black uppercase tracking-wider">Event 4: 2-Hour Exams</h3>
           </div>
           <p className="text-xs text-slate-600 mt-2 font-medium">
-            24 students have 09:00 AM semester exams. Prioritized to ensure on-time arrival.
+            24 students have 09:00 AM exams. Prioritized by soonest remaining time.
           </p>
           <span className={`inline-block mt-2 text-[10px] font-black uppercase px-2 py-0.5 rounded ${
             crisisState ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-600'
@@ -240,50 +324,7 @@ export const ExamDayCrisisPage: React.FC<Props> = ({ navigate }) => {
 
       {crisisState ? (
         <>
-          {/* Real-time Crisis KPI Metrics */}
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Student Demand</span>
-              <p className="text-2xl font-black text-slate-900 mt-1">{crisisState.totalDemand}</p>
-              <span className="text-[10px] text-amber-700 font-bold bg-amber-50 px-1.5 py-0.5 rounded mt-1 inline-block">
-                30 Baseline + 12 Surge
-              </span>
-            </div>
-
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Usable Fleet Capacity</span>
-              <p className="text-2xl font-black text-slate-900 mt-1">{crisisState.totalAvailableSeats}</p>
-              <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded mt-1 inline-block">
-                4 Vans / Mini-Buses Active
-              </span>
-            </div>
-
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Exam Priority Rescued</span>
-              <p className="text-2xl font-black text-purple-600 mt-1">{crisisState.rescuedCount}</p>
-              <span className="text-[10px] text-purple-700 font-bold bg-purple-50 px-1.5 py-0.5 rounded mt-1 inline-block">
-                On-time Board Examination
-              </span>
-            </div>
-
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Late Risk (Detour Delay)</span>
-              <p className="text-2xl font-black text-amber-600 mt-1">{crisisState.lateArrivalCount}</p>
-              <span className="text-[10px] text-amber-700 font-bold bg-amber-50 px-1.5 py-0.5 rounded mt-1 inline-block">
-                Flooding Delay Impact
-              </span>
-            </div>
-
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Capacity Shortfall</span>
-              <p className="text-2xl font-black text-red-600 mt-1">{crisisState.unassignedCount}</p>
-              <span className="text-[10px] text-red-700 font-bold bg-red-50 px-1.5 py-0.5 rounded mt-1 inline-block">
-                Unassigned (Exceeded Capacity)
-              </span>
-            </div>
-          </div>
-
-          {/* Live OpenStreetMap Interactive Route Map */}
+          {/* 4. Live Map Integration */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center space-x-1.5">
@@ -295,81 +336,91 @@ export const ExamDayCrisisPage: React.FC<Props> = ({ navigate }) => {
             <LiveTransitMap isFlooded={true} />
           </div>
 
-          {/* Flooded Road Dijkstra Routing Comparison Box */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-3">
+          {/* 5. Overflow Alternative Options Mobilization Panel */}
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center space-x-2">
-                <Droplets className="w-5 h-5 text-blue-600" />
-                <h3 className="text-sm font-black text-slate-900">
-                  Dijkstra Alternative Route Computation (Canal Flooding)
+              <div>
+                <h3 className="text-base font-black text-slate-900 flex items-center space-x-2">
+                  <Compass className="w-5 h-5 text-amber-600" />
+                  <span>Activated Secondary Alternative Transport Options</span>
                 </h3>
+                <p className="text-xs text-slate-500">
+                  Leftover students beyond primary 34 vehicle seats are routed into specialized local arrangements.
+                </p>
               </div>
-              <span className="text-xs font-bold text-red-600 bg-red-50 border border-red-200 px-2.5 py-0.5 rounded-full">
-                Canal Bridge Submerged
+              <span className="text-xs font-bold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
+                {crisisState.alternativeAssignedCount} Students Accommodated via Alternatives
               </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-              <div className="p-3.5 rounded-xl bg-red-50/60 border border-red-200 space-y-1.5">
-                <div className="font-bold text-red-900 flex items-center justify-between">
-                  <span>⛔ Blocked Primary Route:</span>
-                  <span className="line-through text-red-500 font-mono">20 Minutes (8.5 km)</span>
-                </div>
-                <p className="text-slate-600 font-mono">{crisisState.alternativeRouteSummary.originalPath}</p>
-                <p className="text-[11px] text-red-700">Reason: Flash flooding over Rampur canal spillway. Road blocked by authorities.</p>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-emerald-50/80 border border-emerald-200 space-y-1.5">
-                <div className="font-bold text-emerald-900 flex items-center justify-between">
-                  <span>✅ Activated Dijkstra Detour:</span>
-                  <span className="text-emerald-700 font-mono font-bold">45 Minutes (21.5 km)</span>
-                </div>
-                <p className="text-slate-700 font-mono">{crisisState.alternativeRouteSummary.alternativePath}</p>
-                <p className="text-[11px] text-emerald-800">
-                  Delay Factor: <strong>+{crisisState.alternativeRouteSummary.delayMinutes} mins</strong> detour. Calculated for late-arrival exam risk.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Usable Alternative Fleet Capacity Tracker */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              Alternative Emergency Fleet Load & Exam Prioritization
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {crisisState.vehicleUsage.map(v => (
-                <div key={v.vehicleId} className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {crisisState.alternativeOptions.map((alt, idx) => (
+                <div key={idx} className="p-4 rounded-2xl bg-amber-50/50 border border-amber-200 space-y-2">
                   <div className="flex justify-between items-start">
-                    <span className="text-xs font-bold text-slate-900">{v.vehicleName}</span>
-                    <span className="text-[10px] font-semibold text-slate-500">{v.vehicleType}</span>
+                    <span className="text-xs font-black text-slate-900">{alt.title}</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-200 text-amber-900">
+                      {alt.capacityAllocated} Slots
+                    </span>
                   </div>
-                  <div className="flex justify-between text-xs font-black">
-                    <span className="text-emerald-700">{v.assignedSeats} / {v.totalCapacity} Seats</span>
-                    <span className="text-purple-700">{v.examStudentsCount} Exam Students</span>
-                  </div>
-                  <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                    <div 
-                      className="bg-emerald-600 h-full rounded-full transition-all"
-                      style={{ width: `${(v.assignedSeats / v.totalCapacity) * 100}%` }}
-                    ></div>
+                  <p className="text-xs text-slate-600">{alt.description}</p>
+                  <div className="pt-2 border-t border-amber-200/60 flex justify-between text-[11px] font-mono">
+                    <span>Departs: <strong>{alt.estimatedDeparture}</strong></span>
+                    <span>ETA: <strong>{alt.estimatedArrival}</strong></span>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Filter Tabs & Student Manifest Table */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50">
-              <div className="flex items-center space-x-2">
-                <Users className="w-4 h-4 text-slate-600" />
-                <h3 className="text-sm font-black text-slate-900">
-                  Crisis Manifest & Student Arrival Schedule ({crisisState.assignments.length} Records)
+          {/* 6. AI Decision Explanation Panel */}
+          <div className="bg-slate-900 rounded-3xl p-6 text-white shadow-xl space-y-4 border border-slate-800">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center space-x-2.5">
+                <BrainCircuit className="w-5 h-5 text-amber-400" />
+                <h3 className="text-base font-black text-white">
+                  AI Decision Explanation & Transparent Reasoning Panel
                 </h3>
               </div>
+              <span className="text-xs text-slate-400">Plain Language Audit Log</span>
+            </div>
 
-              {/* Tabs */}
+            <p className="text-xs text-slate-300">
+              The AI optimization engine provides verifiable reasons for each allocation decision based on exam urgency, route access, and seat capacity:
+            </p>
+
+            <div className="space-y-2.5 max-h-60 overflow-y-auto pr-2">
+              {crisisState.aiExplanations.slice(0, 6).map((exp, idx) => (
+                <div key={idx} className="p-3 rounded-xl bg-slate-800/80 border border-slate-700 text-xs space-y-1">
+                  <div className="flex justify-between items-center">
+                    <span className="font-bold text-amber-300">{exp.studentName} ({exp.studentCode})</span>
+                    <span className="text-[10px] font-mono text-slate-400">{exp.decision}</span>
+                  </div>
+                  <p className="text-slate-300 text-[11px] leading-relaxed">
+                    <strong>AI Rationale:</strong> {exp.aiReasoningText}
+                  </p>
+                  <div className="flex flex-wrap gap-2 text-[10px] text-slate-400 pt-1">
+                    <span>Urgency: <strong className="text-slate-300">{exp.factorUrgency}</strong></span>
+                    <span>•</span>
+                    <span>Route: <strong className="text-slate-300">{exp.factorRoute}</strong></span>
+                    <span>•</span>
+                    <span>Capacity: <strong className="text-slate-300">{exp.factorCapacity}</strong></span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 7. Student Crisis Allocation Manifest Table */}
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50">
+              <div>
+                <h3 className="text-sm font-black text-slate-900">
+                  Student Manifest: Status, ETAs & Examination Deadlines ({crisisState.assignments.length} Records)
+                </h3>
+                <p className="text-xs text-slate-500">Includes baseline and 40% demand surge students.</p>
+              </div>
+
+              {/* Filter Tabs */}
               <div className="flex flex-wrap gap-1.5 text-xs font-bold">
                 <button
                   onClick={() => setActiveTab('all')}
@@ -385,15 +436,39 @@ export const ExamDayCrisisPage: React.FC<Props> = ({ navigate }) => {
                     activeTab === 'exam' ? 'bg-purple-600 text-white' : 'bg-white text-purple-700 hover:bg-purple-50'
                   }`}
                 >
-                  Exam Candidates ({crisisState.assignments.filter(a => a.hasExam).length})
+                  Exam ({crisisState.assignments.filter(a => a.hasExam).length})
                 </button>
                 <button
-                  onClick={() => setActiveTab('unassigned')}
+                  onClick={() => setActiveTab('rerouted')}
                   className={`px-3 py-1.5 rounded-lg transition-colors ${
-                    activeTab === 'unassigned' ? 'bg-red-600 text-white' : 'bg-white text-red-700 hover:bg-red-50'
+                    activeTab === 'rerouted' ? 'bg-emerald-600 text-white' : 'bg-white text-emerald-700 hover:bg-emerald-50'
                   }`}
                 >
-                  Unassigned ({crisisState.unassignedCount})
+                  Rerouted ({crisisState.assignments.filter(a => a.status === 'Rerouted').length})
+                </button>
+                <button
+                  onClick={() => setActiveTab('atRisk')}
+                  className={`px-3 py-1.5 rounded-lg transition-colors ${
+                    activeTab === 'atRisk' ? 'bg-amber-600 text-white' : 'bg-white text-amber-700 hover:bg-amber-50'
+                  }`}
+                >
+                  At Risk ({crisisState.atRiskCount})
+                </button>
+                <button
+                  onClick={() => setActiveTab('alternatives')}
+                  className={`px-3 py-1.5 rounded-lg transition-colors ${
+                    activeTab === 'alternatives' ? 'bg-blue-600 text-white' : 'bg-white text-blue-700 hover:bg-blue-50'
+                  }`}
+                >
+                  Alternatives ({crisisState.alternativeAssignedCount})
+                </button>
+                <button
+                  onClick={() => setActiveTab('stranded')}
+                  className={`px-3 py-1.5 rounded-lg transition-colors ${
+                    activeTab === 'stranded' ? 'bg-red-600 text-white' : 'bg-white text-red-700 hover:bg-red-50'
+                  }`}
+                >
+                  Stranded ({crisisState.strandedCount})
                 </button>
               </div>
             </div>
@@ -403,19 +478,21 @@ export const ExamDayCrisisPage: React.FC<Props> = ({ navigate }) => {
                 <thead className="bg-slate-100/80 font-bold text-slate-600">
                   <tr>
                     <th className="px-4 py-3">Student & Code</th>
-                    <th className="px-4 py-3">Exam Status</th>
-                    <th className="px-4 py-3">Assigned Vehicle</th>
-                    <th className="px-4 py-3">Est. Arrival Time</th>
+                    <th className="px-4 py-3">Exam Deadline</th>
+                    <th className="px-4 py-3">Assigned Vehicle / Option</th>
+                    <th className="px-4 py-3">ETA vs Exam Time</th>
                     <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Allocation Reason & Timeline</th>
+                    <th className="px-4 py-3">AI Explanation</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white">
                   {filteredAssignments.map((a) => (
                     <tr key={a.requestId} className={
-                      a.status === 'No Vehicle Available' 
+                      a.status === 'Stranded'
                         ? 'bg-red-50/50' 
-                        : a.hasExam ? 'bg-purple-50/30' : ''
+                        : a.status === 'At risk'
+                          ? 'bg-amber-50/50'
+                          : a.hasExam ? 'bg-purple-50/30' : ''
                     }>
                       <td className="px-4 py-3 font-semibold text-slate-900">
                         {a.studentName}
@@ -436,28 +513,39 @@ export const ExamDayCrisisPage: React.FC<Props> = ({ navigate }) => {
                             {a.vehicleName}
                             <div className="text-[10px] text-slate-500">{a.vehicleType}</div>
                           </div>
+                        ) : a.alternativeOption ? (
+                          <span className="text-amber-800 font-bold">{a.alternativeOption}</span>
                         ) : (
-                          <span className="text-red-600 font-bold italic">No seats available</span>
+                          <span className="text-red-600 font-bold italic">No vehicle capacity</span>
                         )}
                       </td>
                       <td className="px-4 py-3 font-mono">
                         {a.expectedArrivalTime ? (
-                          <span className={a.isLateForExam ? 'text-red-600 font-bold' : 'text-emerald-700 font-bold'}>
-                            {a.expectedArrivalTime}
-                          </span>
+                          <div>
+                            <span className={a.isLateForExam ? 'text-red-600 font-bold' : 'text-emerald-700 font-bold'}>
+                              ETA: {a.expectedArrivalTime}
+                            </span>
+                            {a.hasExam && (
+                              <div className="text-[10px] text-slate-500">
+                                {a.isLateForExam ? '⚠️ Late for 09:00 AM' : '✅ On-time (<09:00 AM)'}
+                              </div>
+                            )}
+                          </div>
                         ) : (
                           <span className="text-slate-400">—</span>
                         )}
                       </td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
-                          a.status === 'Examination Priority'
-                            ? 'bg-purple-100 text-purple-800 border border-purple-300'
-                            : a.status === 'Successfully Reassigned'
-                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                              : a.status === 'Expected to Arrive Late'
+                          a.status === 'Rerouted'
+                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                            : a.status === 'Assigned'
+                              ? 'bg-blue-100 text-blue-800 border border-blue-300'
+                              : a.status === 'Alternative Arranged'
                                 ? 'bg-amber-100 text-amber-800 border border-amber-300'
-                                : 'bg-red-100 text-red-800 border border-red-300'
+                                : a.status === 'At risk'
+                                  ? 'bg-orange-100 text-orange-800 border border-orange-300'
+                                  : 'bg-red-100 text-red-800 border border-red-300'
                         }`}>
                           {a.status}
                         </span>
@@ -479,17 +567,16 @@ export const ExamDayCrisisPage: React.FC<Props> = ({ navigate }) => {
           </div>
           <h2 className="text-2xl font-black text-slate-900">Exam Day Crisis Mode Standby</h2>
           <p className="text-sm text-slate-500 max-w-lg mx-auto">
-            Click <strong>Trigger Exam Day Crisis</strong> to load the multi-disruption event (2 Government Bus failures, +40% surge demand, flooded canal road detour, and semester exam deadlines).
+            Click <strong>Trigger Exam Day Crisis</strong> to execute the full multi-disruption optimization (2 Government Bus failures, +40% surge demand, flooded canal road detour, and semester exam deadlines).
           </p>
           <button
             onClick={handleActivateCrisis}
             className="px-6 py-3.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-black text-xs shadow-lg shadow-red-600/20"
           >
-            Activate Crisis Scenario
+            Trigger Exam Day Crisis
           </button>
         </div>
       )}
     </div>
   );
 };
-
