@@ -466,7 +466,50 @@ Ensure seamless zero-friction production testing on Vercel (`https://raahdost.ve
 
 __________________________________________________________________________________________________________________________________________
 
-## 10. REAL-TIME TRIP LIFECYCLE, EXAM TIME SYNC, AND BIDIRECTIONAL PORTAL CONNECTIVITY PROMPT
+__________________________________________________________________________________________________________________________________________
+
+## 10. FREE OPEN-SOURCE MAPS MIGRATION & UNIVERSAL PORTAL EDIT CONTROLS PROMPT
+
+Replace all proprietary Google Maps APIs with a 100% free, zero-billing open-source geospatial stack, and implement universal entity editing:
+1. **Free Geospatial Stack Migration:**
+   - **Interactive Map:** Leaflet and React-Leaflet with OpenStreetMap tiles and standard attribution ("© OpenStreetMap contributors"). Center default: Mangalore, Karnataka. Custom SVG marker icons for students, buses, community vehicles, bus shelters, and colleges.
+   - **Address Search & Geocoding:** Nominatim geocoding restricted to India (Mangalore preferred) with 500ms typing debounce, 1 req/sec rate limit, local caching, and custom User-Agent. Fallback to interactive map pin-dragging and browser Geolocation API.
+   - **Road Routing & Distance:** OSRM (Open Source Routing Machine) road routing for realistic road geometries, distances, and ETAs. Recalculates dynamically only when vehicles move >100m.
+   - **Flooded Road Detours:** Road graph network with Dijkstra shortest path avoiding flooded segments (e.g. NH-66 Kuloor River Bridge) and outputting inland bypass coordinates (Kinnigoli-Kateel-Bajpe) to OSRM.
+2. **Universal Edit Modals Across All 3 Portals:**
+   - **Student Portal:** Edit name, college, village, class start time, exam date/time, and cancel pending pickup requests.
+   - **Vehicle Portal:** Edit vehicle model, registration number plate, capacity, free seats counter, and active corridor.
+   - **Admin Portal:** Edit bus fleet schedules, toggle road network blockages/flood reasons, and verify community driver profiles with a universal audit trail.
+3. **Regional Localization & Operational Hardening:**
+   - **Timezone:** Asia/Kolkata (IST) live clock with one-click 12h/24h toggle.
+   - **Bilingual Interface:** Instant language toggle between English and ಕನ್ನಡ (Kannada).
+   - **Offline Resilience:** Visual "Reconnecting..." indicator when network drops with automatic data resynchronization upon reconnection.
+
+__________________________________________________________________________________________________________________________________________
+
+## 11. PROBLEM STATEMENT AUDIT & HACKATHON EVALUATION RUBRIC PROMPT
+
+Execute an end-to-end technical audit of RaahDost against the "ROUTELESS: The Last Mile" challenge and the evaluation rubric:
+1. **Challenge Verification ("ROUTELESS: The Last Mile"):**
+   - Verify how limited transportation resources are managed in rural villages.
+   - Ensure students can find alternative ways to reach institutions during breakdowns.
+   - Ensure technology makes rural transport accessible, responsive, and efficient.
+2. **Surprise Hurdle Audit ("The Exam Day Crisis"):**
+   - 2 KSRTC coastal buses broken down (#1101 & #1102).
+   - +40% passenger demand surge (42 total students).
+   - NH-66 Kuloor Bridge blocked by floodwaters.
+   - Semester exams within 2 hours.
+   - Verify before vs. after optimization matrix and AI allocation rationale.
+3. **Hackathon Evaluation Rubric Criteria:**
+   - **Prompt Quality & Iterations:** Maintain comprehensive documentation of all prompts and design decisions in `Prompt.md`.
+   - **AI Utilization:** Multi-tier Gemini Flash integration + local grounded heuristics with 15 callable transit tools.
+   - **Creativity & Problem-Solving:** Community commuter empty seat mobilization, free open-source geospatial stack, and student privacy preservation via public shelters.
+   - **Debugging & Adaptability:** Rapid resolution of real-time sync bugs and handling surprise flood disruptions.
+   - **Final Working Solution Quality:** Zero console errors, clean TypeScript build, fast mobile-first UI, and public deployment on Vercel (`https://raahdost.vercel.app`).
+
+__________________________________________________________________________________________________________________________________________
+
+## 12. REAL-TIME TRIP LIFECYCLE, EXAM TIME SYNC, AND BIDIRECTIONAL PORTAL CONNECTIVITY PROMPT
 
 Execute precision functional fixes resolving sync, journey creation, and driver-student lifecycle connectivity:
 1. **Exam Time Single Source of Truth:**
