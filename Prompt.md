@@ -324,3 +324,142 @@ Generate **only the finished MASTER DEVELOPMENT PROMPT**.
 [Paste your complete project idea, problem analysis, proposed solution, and features here]
 
 Now analyse the provided project solution and generate the complete Master Development Prompt.
+
+
+__________________________________________________________________________________________________________________________________________
+
+## 3. PROBLEM STATEMENT AUDIT & "THE EXAM DAY CRISIS" PROMPT
+
+You are a senior full-stack engineer and QA auditor. Audit my existing ROUTELESS website against the problem statement below, then FIX everything that is missing or inaccurate. Do not just report problems.
+
+### PROBLEM STATEMENT: "ROUTELESS: The Last Mile - AI-Powered Rural Transportation Challenge"
+In many rural villages, students depend on a limited number of government buses to reach schools and colleges. When buses are unavailable, routes are disrupted, or demand exceeds capacity, students are stranded. The solution must use AI to manage limited transport resources, help students find alternative ways to reach their institutions, and make rural transportation more accessible and efficient. It should show creativity, practical problem-solving and effective use of AI.
+
+### SURPRISE HURDLE: "THE EXAM DAY CRISIS"
+- 2 government buses break down and become unavailable
+- Student transport demand rises by 40%
+- A major road connecting two villages is blocked by flooding
+- Several students have exams within the next 2 hours
+The system must reallocate the remaining buses, suggest alternative routes, prioritize students with exams, use resources efficiently, and minimize the number of students who cannot reach their institutions on time. It must visibly update the transport plan when the crisis occurs.
+
+### STEP 1 - UNDERSTAND
+Read the whole codebase first. Summarize in a short list: what the app does, the main pages and components, and the data and logic behind bus allocation and routing.
+
+### STEP 2 - AUDIT
+Create a checklist and mark each item PASS, PARTIAL or FAIL, with evidence (file and function names):
+1. Does it manage a limited bus fleet and capacity per route?
+2. Does it handle disrupted or unavailable buses and routes?
+3. Does it handle demand exceeding capacity?
+4. Does it use AI to reallocate transport resources and find alternative ways for students to reach their institutions?
+5. Does it handle the Exam Day Crisis:
+   - 2 buses breaking down and becoming unavailable?
+   - A 40% surge in student demand?
+   - A major road blocked by flooding, requiring alternative routes?
+   - Students with exams within 2 hours prioritized?
+   - Visual and clear updates to the transport plan when crisis occurs?
+6. Is the solution creative, practical, and does it use AI effectively?
+7. Is the UI clean, responsive, intuitive, and easy to use on mobile?
+
+### STEP 3 - FIX
+Fix every item marked PARTIAL or FAIL. Keep the code clean, modular, and fully functional.
+
+__________________________________________________________________________________________________________________________________________
+
+## 4. MANGALORE REALISTIC DATASET & AI STUDENT GUIDE PROMPT
+
+Add two things to the ROUTELESS website: (A) realistic demo data set in Mangalore, Karnataka, and (B) an AI Student Guide Agent that uses this data. Reuse the existing code structure, and make sure the Exam Day Crisis mode still works with the new data.
+
+### PART A - DEMO DATA (Mangalore area, Karnataka)
+Create a single data file (for example `/data/demoData.js` or `.ts`) that every part of the app reads from. Include:
+1. 8 to 10 villages and towns around Mangalore (Mangaluru), Dakshina Kannada: Ullal, Surathkal, Mulki, Moodbidri, Bajpe, Kinnigoli, Kateel, Farangipete, Vamanjoor, Thokkottu with realistic coordinates.
+2. 8 institutions with a type and a location: a college in the Mangalore city area, an engineering college, a polytechnic, a government PU college and a school.
+3. 10 government buses (KSRTC / city bus style) with: bus ID, route name, list of stops in order, departure times, seat capacity (35 to 50), current status (Running / Delayed / Broken Down) and contact.
+4. A road network graph linking the villages, with distance in km and travel time. Include one major road marked "Flooded/Blocked" for the crisis (NH-66 Kuloor Bridge), plus at least one alternative inland route (via Kateel-Bajpe).
+5. 40 to 60 demo students with: name, village, institution, preferred bus or route, and whether they have an exam today, with the exam time.
+6. Clearly mark DEMO data in the UI.
+
+### PART B - AI STUDENT GUIDE AGENT
+Add a chat assistant (a floating chat button that opens a panel on every page) that guides students in both English and Kannada. A student should be able to ask:
+- *"I live in Mulki and I have an exam at 10:30 at the college in Mangalore. Which bus should I take?"*
+- *"My bus broke down, what should I do?"*
+- *"Is the road to Moodbidri open or blocked by flood?"*
+- *"When is the next bus from Surathkal to the city?"*
+
+__________________________________________________________________________________________________________________________________________
+
+## 5. BRAND IDENTITY & RENAMING PROMPT: "RaahDost — Your friend on every road"
+
+The app name is **"RaahDost"** (Raah = path, Dost = friend). Rename the whole project consistently:
+1. Replace every old name or placeholder (including ROUTELESS used as the app name) in the page titles, navbar, logo text, footer, meta tags, README, package name and the browser tab title. Keep "ROUTELESS: The Last Mile" only as the challenge name in the README or about section.
+2. Rename the chat assistant to **"RaahDost Assistant"** with a friendly greeting:
+   *"Namaste! I'm RaahDost, your travel buddy ('Your friend on every road'). Tell me your village, your college and your exam time, and I'll find the best bus for you."* Add a Kannada greeting option too:
+   *"ನಮಸ್ಕಾರ! ನಾನು ನಿಮ್ಮ ರಾಹ್ದೋಸ್ತ್. ನಿಮ್ಮ ಊರು, ಕಾಲೇಜು ಮತ್ತು ಪರೀಕ್ಷೆಯ ಸಮಯ ಹೇಳಿ, ನಾನು ನಿಮಗೆ ಸೂಕ್ತ ಬಸ್ ತಿಳಿಸುತ್ತೇನೆ."*
+3. Add a short tagline under the logo: **"Your friend on every road."** Make the logo and header look consistent across all pages.
+4. Update the AI system prompt so the agent introduces itself as RaahDost and always speaks in a warm, simple tone that a school or college student can follow.
+5. Search the whole codebase for leftover references to the old name, fix them, and run the app to confirm nothing broke.
+
+__________________________________________________________________________________________________________________________________________
+
+## 6. THREE-PORTAL ARCHITECTURE & REAL-TIME SYNCHRONIZATION PROMPT
+
+Build the complete RaahDost app with three portals, all live at the same time on different phones or browser windows:
+1. **STUDENT PORTAL**: Students find buses, view live vehicle radar, activate Exam Mode, ask for driver rides, and chat with AI.
+2. **VEHICLE / DRIVER PORTAL**: Drivers and private vehicle owners register, go "Available", broadcast routes/seats, stream live 5s GPS, and receive instant pickup pop-ups.
+3. **MAIN ADMIN DASHBOARD**: Controls fleet CRUD, driver verification approvals, real-time Exam Students monitoring, and triggers the Exam Day Crisis simulation.
+
+### REAL DATA, REAL TIME:
+- Use real-time state synchronization (Supabase Auth & Realtime / BroadcastChannel PubSub) so changes across Student, Driver, and Admin portals reflect instantly with zero page reloads.
+- Driver "Available" toggle streams live GPS coordinates every 5 seconds to student radar.
+- Admin forms for adding, editing, and deleting buses, routes, and institutions.
+- Zero-barrier 1-click role logins allowing evaluators to switch between Student, Driver, and Admin profiles without authentication roadblocks.
+
+__________________________________________________________________________________________________________________________________________
+
+## 7. EXAM MODE, DRIVER POP-UP MODAL & ATOMIC TRANSACTIONS PROMPT
+
+### A. STUDENT EXAM MODE
+- Prominent card: "Exam today? Turn on Exam Mode". Sets exam time, destination institution, and latest arrival time.
+- Displays focused countdown timer ("Exam in 1h 25m, leave by 8:35 AM") and safety buffer calculation.
+- "Request a ride" from individual nearby drivers and "Ask all nearby drivers" broadcast button.
+- Priority queuing: In crisis mode, Exam Mode students receive first allocation on relief vehicles.
+
+### B. DRIVER REQUEST POP-UP MODAL
+- Bottom-sheet mobile modal springing up when a student requests a ride.
+- Synthesized Web Audio API chime and mobile device vibration.
+- 60-second animated countdown timer; auto-declines on timeout.
+- Student photo, name, pickup shelter stop, destination institution, exam priority badge, and requested seats.
+- **Atomic Transaction Safety:** First driver to tap Accept claims the ride; request disappears from other drivers with "Already taken".
+- One-click "Start Navigate" opening Google Maps directions, clickable student call button, and trip status controls ("Picked Up", "Dropped at College").
+- Anti-spam rate limiting: pauses notifications for 10 minutes if 3 consecutive requests are ignored.
+- Safety: Verified public shelters used for pickups; student home coordinates remain private; Emergency SOS button.
+
+__________________________________________________________________________________________________________________________________________
+
+## 8. MULTI-TIER GEMINI AI AGENT & WEB SPEECH VOICE PROMPT
+
+Implement an intelligent multi-tier AI assistant with:
+1. **Multi-Tier Execution Chain:**
+   - Primary: Gemini 1.5/2.0 Flash (`gemini-1.5-flash`)
+   - Secondary: Gemini Flash-Lite / 8B (`gemini-1.5-flash-8b`) with exponential backoff
+   - Safety Net: Deterministic grounded Mangalore transit knowledge engine with 15 callable tools (zero runtime failures).
+2. **15 Function Calling Tools:**
+   `getNearbyBuses`, `getBusStatus`, `recommendOptions`, `reallocateBuses`, `calculateDetour`, `getFloodedRoads`, `getExamStudentsAtRisk`, `notifyStudents`, `getDriverAvailability`, `dispatchEmergencyDriver`, `getSeatAvailability`, `estimateArrivalTime`, `reportRoadIssue`, `getAlternativeStops`, `translateCrisisAlert`.
+3. **Three Portal Personas:**
+   - Student Persona: Warm, simple, encouraging, protective, exams-first.
+   - Driver Persona: Action-oriented, turn-by-turn routes, passenger counts, shelter locations.
+   - Admin Persona: Data-dense, analytical, capacity metrics, risk mitigation.
+4. **Web Speech API Voice Assistant:**
+   - Microphone Speech Recognition (`SpeechRecognition` / `webkitSpeechRecognition`) supporting English (`en-IN`), Kannada (`kn-IN`), and Hindi (`hi-IN`).
+   - Voice Synthesis (`speechSynthesis.speak`) reading assistant responses aloud.
+5. **Proactive Background Monitor:**
+   - Periodic 90-second scan checking if exam students are at risk or flood detours are active, surfacing proactive alert notifications.
+
+__________________________________________________________________________________________________________________________________________
+
+## 9. PRODUCTION DEPLOYMENT & ZERO-BARRIER TESTING PROMPT
+
+Ensure seamless zero-friction production testing on Vercel (`https://raahdost.vercel.app`):
+1. **1-Click Portal Selector:** Prominent Student, Driver, and Admin role buttons on the login screen to allow testing on three separate phones simultaneously.
+2. **Graceful Auth Fallback:** If Supabase OAuth provider keys are unconfigured, automatically fall back to demo profiles so users never encounter blocking error alerts.
+3. **SPA Deep-Linking:** Configure `vercel.json` rewrites to support direct deep-linking across `/student`, `/driver`, `/dashboard`, and `/crisis`.
+4. **Unit Tests & Build:** Maintain clean TypeScript compilation (`tsc -b && vite build`) and 100% pass rates across algorithmic test suites.
