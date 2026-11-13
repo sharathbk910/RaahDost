@@ -58,7 +58,7 @@ export const TopNavbar: React.FC<NavbarProps> = ({
               <div className="flex items-center space-x-2">
                 <span className="font-black text-lg sm:text-xl tracking-tight text-white">RaahDost</span>
               </div>
-              <p className="text-[11px] text-slate-400 font-medium hidden sm:block">Your Journey. Our Responsibility.</p>
+              <p className="text-[11px] text-emerald-400 font-semibold tracking-tight hidden sm:block">Your friend on every road.</p>
             </div>
           </div>
         </div>

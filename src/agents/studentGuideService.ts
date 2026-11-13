@@ -157,10 +157,11 @@ function generateGroundedMangaloreResponse(query: string, isCrisis: boolean): st
 
   // Default Guidance
   return (
-    `Hello! I am your **RaahDost Student Guide** for Mangalore & Dakshina Kannada.\n\n` +
-    `I can help you find KSRTC buses, check road closures (like Kuloor bridge), or arrange exam emergency transport.\n\n` +
+    `Namaste! I'm **RaahDost**, your travel buddy ("Your friend on every road"). 🚌\n\n` +
+    `Tell me your village or town, your college, and your exam time, and I'll find the best bus for you!\n\n` +
+    `ಕನ್ನಡ: ನಮಸ್ಕಾರ! ನಾನು ನಿಮ್ಮ ರಾಹ್ದೋಸ್ತ್ (RaahDost). ನಿಮ್ಮ ಊರು, ಕಾಲೇಜು ಮತ್ತು ಪರೀಕ್ಷಾ ಸಮಯ ತಿಳಿಸಿ, ನಾನು ಸೂಕ್ತ ಬಸ್ಸು ಮಾಹಿತಿ ನೀಡುತ್ತೇನೆ.\n\n` +
     `Try asking:\n` +
-    `• *"I am in Mulki and have an exam at 10:30 AM. Which bus should I take?"*\n` +
+    `• *"I live in Mulki and I have an exam at 10:30 at the college in Mangalore. Which bus should I take?"*\n` +
     `• *"Is the road to Moodbidri open?"*\n` +
     `• *"When is the next bus from Surathkal to the city?"*`
   );

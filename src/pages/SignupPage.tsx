@@ -62,7 +62,7 @@ export const SignupPage: React.FC<Props> = ({ navigate }) => {
           <Bus className="w-8 h-8 text-white" />
         </div>
         <h1 className="text-2xl font-black text-slate-900 tracking-tight">Create RaahDost Account</h1>
-        <p className="text-xs font-semibold text-slate-500">Student Mobility Registration Portal</p>
+        <p className="text-xs font-semibold text-emerald-600">Your friend on every road.</p>
       </div>
 
       <div className="bg-white rounded-3xl border border-slate-200 shadow-xl p-6 sm:p-8 space-y-6">

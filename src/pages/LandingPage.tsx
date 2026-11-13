@@ -29,15 +29,15 @@ export const LandingPage: React.FC<Props> = ({ navigate }) => {
           </div>
 
           <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-none">
-            Your Journey. <br />
+            RaahDost. <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-amber-300">
-              Our Responsibility.
+              Your friend on every road.
             </span>
           </h1>
 
           <p className="text-lg sm:text-xl text-slate-300 font-normal leading-relaxed">
-            When rural public transport breaks down, students miss crucial exams and classes. 
-            <strong className="text-white font-semibold"> RaahDost</strong> doesn't just broadcast delay alerts—it dynamically coordinates available private vans, autos, and mini-buses to get students to their institutions safely.
+            When rural public buses break down or coastal monsoon rains flood arterial bridges, students miss crucial exams and practicals. 
+            <strong className="text-white font-semibold"> RaahDost</strong> (Raah = path, Dost = friend) dynamically coordinates verified local relief vans, mini-buses, and auto pools to ensure no student is left stranded.
           </p>
 
           <div className="flex flex-wrap gap-4 pt-4">

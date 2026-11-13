@@ -25,9 +25,11 @@ export const LoginPage: React.FC<Props> = ({ navigate }) => {
     setErrorMsg(null);
     setLoading(true);
     const { error } = await signInWithGoogle();
+    setLoading(false);
     if (error) {
       setErrorMsg(error.message);
-      setLoading(false);
+    } else {
+      navigate('/dashboard');
     }
   };
 
@@ -66,7 +68,7 @@ export const LoginPage: React.FC<Props> = ({ navigate }) => {
           <Bus className="w-6 h-6 text-white" />
         </div>
         <h1 className="text-2xl font-black text-slate-900 tracking-tight">RaahDost Login</h1>
-        <p className="text-xs font-semibold text-slate-500">Your Journey. Our Responsibility.</p>
+        <p className="text-xs font-semibold text-emerald-600">Your friend on every road.</p>
       </div>
 
       <div className="bg-white rounded-3xl border border-slate-200 shadow-xl p-6 sm:p-8 space-y-6">

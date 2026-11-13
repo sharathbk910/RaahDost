@@ -21,7 +21,7 @@ export const StudentGuideChatModal: React.FC = () => {
     {
       id: 'msg-welcome',
       sender: 'assistant',
-      text: "Namaskara! 🙏 I'm your **RaahDost Student Guide** for Mangalore & Dakshina Kannada. Ask me which bus to catch, check flood road closures, or get emergency transport if you have an exam today!",
+      text: "Namaste! 🙏 I'm **RaahDost**, your travel buddy (\"Your friend on every road\"). Tell me your village, your college and your exam time, and I'll find the best bus for you!\n\nಕನ್ನಡ: ನಮಸ್ಕಾರ! ನಾನು ನಿಮ್ಮ ರಾಹ್ದೋಸ್ತ್ (RaahDost). ನಿಮ್ಮ ಊರು, ಕಾಲೇಜು ಮತ್ತು ಪರೀಕ್ಷೆಯ ಸಮಯ ಹೇಳಿ, ನಾನು ನಿಮಗೆ ಸೂಕ್ತ ಬಸ್ ತಿಳಿಸುತ್ತೇನೆ.",
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -89,7 +89,7 @@ export const StudentGuideChatModal: React.FC = () => {
           aria-label="Open AI Student Guide"
         >
           <Bot className="w-5 h-5 text-white" />
-          <span className="hidden sm:inline">AI Student Guide</span>
+          <span className="hidden sm:inline">RaahDost Assistant</span>
           {isCrisisActive && (
             <span className="bg-white text-red-700 text-[10px] font-black px-1.5 py-0.5 rounded-full uppercase">
               Crisis Active
@@ -109,12 +109,12 @@ export const StudentGuideChatModal: React.FC = () => {
               </div>
               <div>
                 <div className="flex items-center space-x-1.5">
-                  <span className="text-xs font-black tracking-tight">RaahDost Student Guide</span>
+                  <span className="text-xs font-black tracking-tight">RaahDost Assistant</span>
                   <span className="text-[9px] uppercase font-bold px-1.5 py-0.2 rounded bg-brand-500/30 text-emerald-300">
-                    AI Assistant
+                    Travel Buddy
                   </span>
                 </div>
-                <p className="text-[10px] text-slate-400 font-medium">Dakshina Kannada • Mangaluru Corridor</p>
+                <p className="text-[10px] text-emerald-400 font-semibold">Your friend on every road.</p>
               </div>
             </div>
 
