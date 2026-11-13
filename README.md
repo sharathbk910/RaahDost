@@ -29,7 +29,7 @@ RaahDost provides three dedicated, mobile-first and desktop-optimized portals:
   - **"Need help reaching on time?" Button:** Instant emergency assistance trigger.
   - **"I Have an Exam Today" Toggle:** Automatically prioritizes student seating during peak hours and disruptions.
   - **Automatic Alert Banner:** Pops up immediately when a student's assigned bus breaks down, is full, or delayed.
-- **Interactive Map:** Live Leaflet/Google Map displaying student location, bus radar, community drivers, and flood hazards.
+- **Interactive Map:** Live Leaflet OpenStreetMap displaying student location, bus radar, moving community drivers, OSRM road routes, and flood hazards (100% free, no API keys).
 - **Help Screen (RaahDost Assistant):** AI agent that ranks solutions: alternative buses, detour routes around floods, verified community drivers, or emergency auto pools.
 - **Safety Features:** Guardian SMS notifications, driver license plate verification, emergency SOS button, and report-a-problem.
 
@@ -67,7 +67,7 @@ Under **Crisis Control** (`/crisis`):
 
 - **Frontend:** React 19, TypeScript, Tailwind CSS, Lucide React
 - **Data & Realtime:** Unified PubSub DataStore with `BroadcastChannel` live tab sync & Supabase Auth/Realtime integration
-- **GIS & Maps:** Leaflet & React-Leaflet with OpenStreetMap tiles (with Google Maps JavaScript API fallback)
+- **GIS & Maps:** Leaflet & React-Leaflet with OpenStreetMap tiles, Nominatim geocoding, and OSRM road routing (100% Free & Open-Source, zero billing, zero API keys required)
 - **AI Integration:** Google Gemini API with grounded local transit heuristics
 - **Build Tool:** Vite
 

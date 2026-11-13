@@ -21,12 +21,16 @@ import {
   AlertOctagon,
   Clock,
   ArrowRight,
-  TrendingUp
+  TrendingUp,
+  Pencil
 } from 'lucide-react';
 import { db } from '../services/dataStore';
 import { Vehicle, DriverProfile, TransportRequest, Village, Institution, CrisisSimulationResult } from '../types';
 import { LiveTransitMap } from '../components/map/LiveTransitMap';
 import { executeExamDayCrisisOptimization } from '../algorithms/examCrisisEngine';
+import { AdminBusEditModal } from '../components/admin/AdminBusEditModal';
+import { AdminRoadEditModal } from '../components/admin/AdminRoadEditModal';
+import { AdminAuditLogModal } from '../components/admin/AdminAuditLogModal';
 
 interface Props {
   navigate?: (route: string) => void;
@@ -57,6 +61,11 @@ export const AdminDashboard: React.FC<Props> = ({ navigate }) => {
   const [newBusName, setNewBusName] = useState('KSRTC City Shuttle #1108');
   const [newBusCapacity, setNewBusCapacity] = useState(42);
   const [newBusVillageId, setNewBusVillageId] = useState('vil-mulki');
+
+  // Edit Modals for Bus, Road Network & Audit Logs
+  const [editingBus, setEditingBus] = useState<Vehicle | null>(null);
+  const [showRoadModal, setShowRoadModal] = useState(false);
+  const [showAuditModal, setShowAuditModal] = useState(false);
 
   // Crisis Control Parameters
   const [surgeDemandPercent, setSurgeDemandPercent] = useState(40);
@@ -192,7 +201,25 @@ export const AdminDashboard: React.FC<Props> = ({ navigate }) => {
           </p>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => setShowRoadModal(true)}
+            className="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl border border-slate-700 flex items-center space-x-1.5 shadow-sm transition-colors"
+            title="Manage Road Network & Flooded Corridors"
+          >
+            <MapPin className="w-3.5 h-3.5 text-red-400" />
+            <span>Road & Flood Control</span>
+          </button>
+
+          <button
+            onClick={() => setShowAuditModal(true)}
+            className="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl border border-slate-700 flex items-center space-x-1.5 shadow-sm transition-colors"
+            title="View Real-Time Audit Log History"
+          >
+            <Clock className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Audit History</span>
+          </button>
+
           <button
             onClick={() => {
               setActiveTab('crisis');
@@ -475,13 +502,22 @@ export const AdminDashboard: React.FC<Props> = ({ navigate }) => {
                             </span>
                           </td>
                           <td className="py-2.5 px-3 text-right">
-                            <button
-                              onClick={() => handleDeleteBus(bus.id)}
-                              className="text-red-500 hover:text-red-700 p-1"
-                              title="Delete"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            <div className="flex items-center justify-end space-x-1.5">
+                              <button
+                                onClick={() => setEditingBus(bus)}
+                                className="text-slate-500 hover:text-emerald-600 p-1 rounded-lg hover:bg-emerald-50 transition-colors"
+                                title="Edit Bus Details, Route & Timings"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteBus(bus.id)}
+                                className="text-red-500 hover:text-red-700 p-1 rounded-lg hover:bg-red-50 transition-colors"
+                                title="Delete Bus"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -872,6 +908,24 @@ export const AdminDashboard: React.FC<Props> = ({ navigate }) => {
           )}
         </div>
       </div>
+
+      {/* ADMIN EDIT & MANAGEMENT MODALS */}
+      <AdminBusEditModal
+        isOpen={Boolean(editingBus)}
+        bus={editingBus}
+        onClose={() => setEditingBus(null)}
+        onSaved={() => setBuses(db.getVehicles())}
+      />
+
+      <AdminRoadEditModal
+        isOpen={showRoadModal}
+        onClose={() => setShowRoadModal(false)}
+      />
+
+      <AdminAuditLogModal
+        isOpen={showAuditModal}
+        onClose={() => setShowAuditModal(false)}
+      />
     </div>
   );
 };

@@ -15,13 +15,15 @@ import {
   Star, 
   AlertCircle,
   Radio,
-  Share2
+  Share2,
+  Pencil
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../services/dataStore';
 import { DriverProfile, PickupRequest, Vehicle } from '../types';
 import { FirstTimeTourModal } from '../components/common/FirstTimeTourModal';
 import { DriverRequestModal } from '../components/driver/DriverRequestModal';
+import { DriverProfileEditModal } from '../components/driver/DriverProfileEditModal';
 
 interface Props {
   navigate?: (route: string) => void;
@@ -51,6 +53,7 @@ export const DriverPortal: React.FC<Props> = ({ navigate }) => {
   const [gpsActive, setGpsActive] = useState(false);
   const [acceptedRequest, setAcceptedRequest] = useState<PickupRequest | null>(null);
   const [activeModalRequest, setActiveModalRequest] = useState<PickupRequest | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [ignoreCount, setIgnoreCount] = useState<number>(0);
   const [pausedUntil, setPausedUntil] = useState<number | null>(null);
 
@@ -266,6 +269,16 @@ export const DriverPortal: React.FC<Props> = ({ navigate }) => {
         </div>
 
         <div className="flex items-center space-x-2">
+          <button
+            type="button"
+            onClick={() => setShowEditModal(true)}
+            className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-teal-50 text-slate-700 hover:text-teal-800 border border-slate-200 text-xs font-bold flex items-center space-x-1.5 transition-colors shadow-xs"
+            title="Edit vehicle details, route or seats"
+          >
+            <Pencil className="w-3.5 h-3.5 text-teal-600" />
+            <span className="hidden sm:inline">Edit Details</span>
+          </button>
+
           <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full border ${
             driver?.approvalStatus === 'approved'
               ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
@@ -649,6 +662,20 @@ export const DriverPortal: React.FC<Props> = ({ navigate }) => {
           <span className="text-[10px] text-slate-500 font-bold uppercase">Safety Rating</span>
         </div>
       </div>
+
+      {/* Driver Profile Edit Modal */}
+      {showEditModal && driver && (
+        <DriverProfileEditModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          driver={driver}
+          onSaved={() => {
+            const allDrivers = db.getDrivers();
+            const matched = allDrivers.find(d => d.id === driver.id);
+            if (matched) setDriver(matched);
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -20,15 +20,20 @@ import {
   Send,
   Share2,
   AlertOctagon,
-  Volume2
+  Volume2,
+  Pencil,
+  Bell
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../services/dataStore';
-import { Vehicle, DriverProfile, PickupRequest } from '../types';
+import { Vehicle, DriverProfile, PickupRequest, StudentNotification } from '../types';
 import { LiveTransitMap } from '../components/map/LiveTransitMap';
 import { LanguageToggle, SupportedLanguage, TRANSLATIONS } from '../components/common/LanguageToggle';
 import { FirstTimeTourModal } from '../components/common/FirstTimeTourModal';
 import { ExamModeView } from '../components/student/ExamModeView';
+import { StudentProfileEditModal } from '../components/student/StudentProfileEditModal';
+import { ExamModeEditModal } from '../components/student/ExamModeEditModal';
+import { PickupRequestEditModal } from '../components/student/PickupRequestEditModal';
 
 interface Props {
   navigate?: (route: string) => void;
@@ -59,6 +64,12 @@ export const StudentPortal: React.FC<Props> = ({ navigate }) => {
   const [guardianAlertSent, setGuardianAlertSent] = useState(false);
   const [sosActive, setSosActive] = useState(false);
 
+  // Edit Modals & Live Notifications State
+  const [showProfileEdit, setShowProfileEdit] = useState(false);
+  const [showExamEdit, setShowExamEdit] = useState(false);
+  const [editingRequest, setEditingRequest] = useState<PickupRequest | null>(null);
+  const [notifications, setNotifications] = useState<StudentNotification[]>([]);
+
   const t = TRANSLATIONS[language];
 
   // Subscribe to real-time updates from database store
@@ -66,6 +77,7 @@ export const StudentPortal: React.FC<Props> = ({ navigate }) => {
     const refreshData = () => {
       setBuses(db.getVehicles());
       setAvailableDrivers(db.getAvailableDriversForStudents());
+      setNotifications(db.getNotifications(user?.id));
       if (user?.id) {
         setMyPickupRequests(db.getRequestsForStudent(user.id));
       }
@@ -228,6 +240,32 @@ export const StudentPortal: React.FC<Props> = ({ navigate }) => {
         </div>
       )}
 
+      {/* Real-time Transit Schedule & Road Notifications */}
+      {notifications.length > 0 && (
+        <div className="space-y-2">
+          {notifications.slice(0, 2).map((notif) => (
+            <div 
+              key={notif.id}
+              className="p-3 bg-amber-50 border border-amber-300 rounded-2xl flex items-center justify-between text-xs text-amber-900 shadow-sm"
+            >
+              <div className="flex items-center space-x-2">
+                <Bell className="w-4 h-4 text-amber-600 flex-shrink-0 animate-bounce" />
+                <div>
+                  <strong className="block text-xs font-black">{notif.title}</strong>
+                  <span className="text-[11px] text-amber-800">{notif.message}</span>
+                </div>
+              </div>
+              <button
+                onClick={() => db.markNotificationRead(notif.id)}
+                className="text-[10px] bg-amber-200/80 hover:bg-amber-300 text-amber-900 px-2 py-0.5 rounded font-bold"
+              >
+                Dismiss
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* TAB 1: HOME SCREEN */}
       {activeTab === 'home' && (
         isExamModeActive ? (
@@ -256,12 +294,22 @@ export const StudentPortal: React.FC<Props> = ({ navigate }) => {
                     </p>
                   </div>
                 </div>
-                <button
-                  onClick={() => setIsExamModeActive(true)}
-                  className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-md whitespace-nowrap"
-                >
-                  Turn On Exam Mode
-                </button>
+                <div className="flex items-center space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowExamEdit(true)}
+                    className="px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl border border-slate-300 flex items-center space-x-1 shadow-xs"
+                  >
+                    <Pencil className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Edit Exam</span>
+                  </button>
+                  <button
+                    onClick={() => setIsExamModeActive(true)}
+                    className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-md whitespace-nowrap"
+                  >
+                    Turn On Exam Mode
+                  </button>
+                </div>
               </div>
             </div>
           {/* Automatic Bus Disruption Alert Banner */}
@@ -620,17 +668,28 @@ export const StudentPortal: React.FC<Props> = ({ navigate }) => {
       {activeTab === 'profile' && (
         <div className="space-y-4">
           <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
-            <div className="flex items-center space-x-3 pb-4 border-b border-slate-100">
-              <div className="w-14 h-14 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black text-xl shadow-md">
-                {user?.fullName?.charAt(0) || 'A'}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center space-x-3">
+                <div className="w-14 h-14 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black text-xl shadow-md">
+                  {user?.fullName?.charAt(0) || 'A'}
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900">{user?.fullName || 'Student'}</h3>
+                  <p className="text-xs text-slate-500 font-mono">{user?.email}</p>
+                  <span className="text-[10px] font-bold uppercase text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 mt-1 inline-block">
+                    Verified Student
+                  </span>
+                </div>
               </div>
-              <div>
-                <h3 className="text-base font-black text-slate-900">{user?.fullName || 'Student'}</h3>
-                <p className="text-xs text-slate-500 font-mono">{user?.email}</p>
-                <span className="text-[10px] font-bold uppercase text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 mt-1 inline-block">
-                  Verified Student
-                </span>
-              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowProfileEdit(true)}
+                className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border border-slate-200 text-xs font-bold flex items-center space-x-1.5 transition-colors shadow-xs"
+              >
+                <Pencil className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Edit Profile</span>
+              </button>
             </div>
 
             <div className="space-y-2 text-xs">
@@ -641,6 +700,14 @@ export const StudentPortal: React.FC<Props> = ({ navigate }) => {
               <div className="flex justify-between py-1.5 border-b border-slate-50">
                 <span className="text-slate-500">College:</span>
                 <span className="font-bold text-slate-900 text-right">{studentCollege}</span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-slate-50">
+                <span className="text-slate-500">Course:</span>
+                <span className="font-bold text-slate-900">{user?.course || 'Diploma Mechanical 2nd Year'}</span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-slate-50">
+                <span className="text-slate-500">Class Timings:</span>
+                <span className="font-bold text-slate-900">{user?.classTiming || '08:30 AM - 04:30 PM'}</span>
               </div>
               <div className="flex justify-between py-1.5 border-b border-slate-50">
                 <span className="text-slate-500">Guardian Phone:</span>
@@ -710,6 +777,43 @@ export const StudentPortal: React.FC<Props> = ({ navigate }) => {
           </button>
         </div>
       </div>
+
+      {/* Student Profile Edit Modal */}
+      {showProfileEdit && (
+        <StudentProfileEditModal
+          isOpen={showProfileEdit}
+          onClose={() => setShowProfileEdit(false)}
+        />
+      )}
+
+      {/* Student Exam Mode Edit Modal */}
+      {showExamEdit && (
+        <ExamModeEditModal
+          isOpen={showExamEdit}
+          onClose={() => setShowExamEdit(false)}
+          examTime={examTime}
+          examCenter={studentCollege}
+          latestArrival="10:15 AM"
+          isExamModeActive={isExamModeActive}
+          onSaveExamMode={(data) => {
+            setExamTime(data.examTime);
+            setHasExamToday(data.isActive);
+            setIsExamModeActive(data.isActive);
+          }}
+        />
+      )}
+
+      {/* Pickup Request Edit Modal */}
+      {editingRequest && (
+        <PickupRequestEditModal
+          isOpen={Boolean(editingRequest)}
+          onClose={() => setEditingRequest(null)}
+          request={editingRequest}
+          onSaved={() => {
+            if (user?.id) setMyPickupRequests(db.getRequestsForStudent(user.id));
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -392,3 +392,23 @@ export interface DriverReport {
   timestamp: string;
   status: 'pending' | 'resolved';
 }
+
+export interface AuditLogEntry {
+  id: string;
+  timestamp: string;
+  performedBy: string;
+  userRole: 'admin' | 'student' | 'driver' | 'system';
+  action: string;
+  targetEntity: string;
+  details: string;
+}
+
+export interface StudentNotification {
+  id: string;
+  studentId?: string; // specific student or undefined for broadcast
+  title: string;
+  message: string;
+  timestamp: string;
+  type: 'timing_change' | 'route_change' | 'crisis_alert' | 'pickup_status';
+  isRead: boolean;
+}

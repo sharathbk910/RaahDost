@@ -18,12 +18,15 @@ import {
   Send,
   Navigation,
   Compass,
-  Check
+  Check,
+  Pencil
 } from 'lucide-react';
 import { db } from '../../services/dataStore';
 import { DriverProfile, PickupRequest, Vehicle } from '../../types';
 import { UserProfile } from '../../context/AuthContext';
 import { SupportedLanguage, TRANSLATIONS } from '../common/LanguageToggle';
+import { ExamModeEditModal } from './ExamModeEditModal';
+import { PickupRequestEditModal } from './PickupRequestEditModal';
 
 interface Props {
   user: UserProfile | null;
@@ -58,6 +61,10 @@ export const ExamModeView: React.FC<Props> = ({
   const [ratingStars, setRatingStars] = useState(5);
   const [ratingFeedback, setRatingFeedback] = useState('Arrived 45 mins before exam! Very smooth driving.');
   const [ratingSubmitted, setRatingSubmitted] = useState(false);
+
+  // Edit Modals
+  const [showExamEdit, setShowExamEdit] = useState(false);
+  const [showRequestEdit, setShowRequestEdit] = useState(false);
 
   // Running late AI alert modal
   const [showRunningLateModal, setShowRunningLateModal] = useState(false);
@@ -227,13 +234,24 @@ export const ExamModeView: React.FC<Props> = ({
             </span>
           </div>
 
-          <button
-            onClick={onExitExamMode}
-            className="text-xs font-bold text-slate-300 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-xl border border-white/10 flex items-center space-x-1"
-          >
-            <span>Exit Exam Mode</span>
-            <X className="w-3.5 h-3.5" />
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setShowExamEdit(true)}
+              className="text-xs font-bold text-amber-200 hover:text-white bg-amber-500/20 hover:bg-amber-500/30 px-3 py-1.5 rounded-xl border border-amber-400/40 flex items-center space-x-1.5 transition-colors"
+              title="Edit Exam time, centre, or toggle off"
+            >
+              <Pencil className="w-3.5 h-3.5 text-amber-300" />
+              <span>Edit Details</span>
+            </button>
+
+            <button
+              onClick={onExitExamMode}
+              className="text-xs font-bold text-slate-300 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-xl border border-white/10 flex items-center space-x-1"
+            >
+              <span>Exit</span>
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
 
         {/* Big Countdown & Leave-by Time */}
@@ -329,12 +347,23 @@ export const ExamModeView: React.FC<Props> = ({
                   Search radius automatically widened to 5 km. Notifying backup community pool.
                 </div>
               )}
-              <button
-                onClick={handleCancelTrip}
-                className="px-4 py-1.5 bg-white border border-slate-300 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-50"
-              >
-                Cancel Search
-              </button>
+              <div className="flex justify-center space-x-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowRequestEdit(true)}
+                  className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl flex items-center space-x-1 shadow-sm"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                  <span>Edit Request</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCancelTrip}
+                  className="px-3.5 py-1.5 bg-white border border-slate-300 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-50"
+                >
+                  Cancel Search
+                </button>
+              </div>
             </div>
           )}
 
@@ -636,6 +665,39 @@ export const ExamModeView: React.FC<Props> = ({
             )}
           </div>
         </div>
+      )}
+
+      {/* Exam Mode Edit Modal */}
+      {showExamEdit && (
+        <ExamModeEditModal
+          isOpen={showExamEdit}
+          onClose={() => setShowExamEdit(false)}
+          examTime={examTime}
+          examCenter={examCenter}
+          latestArrival={latestArrivalTime}
+          isExamModeActive={true}
+          onSaveExamMode={(data) => {
+            setExamTime(data.examTime);
+            setExamCenter(data.examCenter);
+            setLatestArrivalTime(data.latestArrival);
+            if (!data.isActive) {
+              onExitExamMode();
+            }
+          }}
+        />
+      )}
+
+      {/* Pickup Request Edit Modal */}
+      {showRequestEdit && activeRequest && (
+        <PickupRequestEditModal
+          isOpen={showRequestEdit}
+          onClose={() => setShowRequestEdit(false)}
+          request={activeRequest}
+          onSaved={() => {
+            const reqs = db.getRequestsForStudent(user?.id || 'demo-student-1');
+            if (reqs[0]) setActiveRequest(reqs[0]);
+          }}
+        />
       )}
     </div>
   );

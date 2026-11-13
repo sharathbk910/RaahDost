@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Bus, 
   AlertTriangle, 
@@ -13,7 +13,10 @@ import {
   LogIn,
   Menu,
   X,
-  AlertOctagon
+  AlertOctagon,
+  Clock,
+  Wifi,
+  WifiOff
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -33,6 +36,41 @@ export const TopNavbar: React.FC<NavbarProps> = ({
   setIsMobileMenuOpen
 }) => {
   const { user, signOut } = useAuth();
+  const [isOnline, setIsOnline] = useState(typeof window !== 'undefined' ? window.navigator.onLine : true);
+  const [is24Hour, setIs24Hour] = useState(false);
+  const [currentTime, setCurrentTime] = useState('');
+
+  // Clock updating in Asia/Kolkata timezone
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      const formatted = now.toLocaleTimeString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        hour12: !is24Hour,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+      setCurrentTime(formatted);
+    };
+
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, [is24Hour]);
+
+  // Online / Offline listener
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   return (
     <header className="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-50">
@@ -63,8 +101,31 @@ export const TopNavbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* User Auth Info & Quick Controls */}
+        {/* User Auth Info, Timezone & Quick Controls */}
         <div className="flex items-center space-x-2 sm:space-x-3">
+          {/* Offline / Reconnecting Status Indicator */}
+          {!isOnline && (
+            <div 
+              title="Network disconnected. Attempting to reconnect..." 
+              className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-red-950/80 border border-red-700/60 text-red-300 text-xs font-bold animate-pulse"
+            >
+              <WifiOff className="w-3.5 h-3.5 text-red-400" />
+              <span>Reconnecting...</span>
+            </div>
+          )}
+
+          {/* Asia/Kolkata Timezone & 12h/24h Toggle */}
+          <button
+            onClick={() => setIs24Hour(!is24Hour)}
+            title="Click to toggle 12h/24h format (Asia/Kolkata)"
+            className="hidden sm:flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-mono transition-colors"
+          >
+            <Clock className="w-3.5 h-3.5 text-emerald-400" />
+            <span>{currentTime || 'IST'}</span>
+            <span className="text-[10px] font-sans font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-800/40 px-1 py-0.5 rounded">
+              IST
+            </span>
+          </button>
           {user ? (
             <div className="flex items-center space-x-2">
               <button 

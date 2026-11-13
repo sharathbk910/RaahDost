@@ -10,7 +10,10 @@ import {
   PickupRequest,
   DriverReport,
   PickupRequestStatus,
-  ExamModeStudentStatus
+  ExamModeStudentStatus,
+  RoadSegment,
+  AuditLogEntry,
+  StudentNotification
 } from '../types';
 import { 
   DEMO_VILLAGES, 
@@ -22,6 +25,7 @@ import {
   DEMO_DRIVERS,
   DEMO_PICKUP_REQUESTS
 } from '../data/demoData';
+import { ROAD_NETWORK } from '../algorithms/roadRoutingEngine';
 
 const STORAGE_KEYS = {
   VILLAGES: 'raahdost_villages',
@@ -35,6 +39,9 @@ const STORAGE_KEYS = {
   DRIVERS: 'raahdost_drivers',
   PICKUP_REQUESTS: 'raahdost_pickup_requests',
   REPORTS: 'raahdost_driver_reports',
+  ROADS: 'raahdost_roads',
+  AUDIT_LOGS: 'raahdost_audit_logs',
+  NOTIFICATIONS: 'raahdost_notifications',
 };
 
 class LocalDataStore {
@@ -119,6 +126,15 @@ class LocalDataStore {
     if (!localStorage.getItem(STORAGE_KEYS.REPORTS)) {
       localStorage.setItem(STORAGE_KEYS.REPORTS, JSON.stringify([]));
     }
+    if (!localStorage.getItem(STORAGE_KEYS.ROADS)) {
+      localStorage.setItem(STORAGE_KEYS.ROADS, JSON.stringify(ROAD_NETWORK));
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.AUDIT_LOGS)) {
+      localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify([]));
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS)) {
+      localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify([]));
+    }
   }
 
   resetToDefaults() {
@@ -130,9 +146,12 @@ class LocalDataStore {
     localStorage.setItem(STORAGE_KEYS.DRIVERS, JSON.stringify(DEMO_DRIVERS));
     localStorage.setItem(STORAGE_KEYS.PICKUP_REQUESTS, JSON.stringify(DEMO_PICKUP_REQUESTS));
     localStorage.setItem(STORAGE_KEYS.REPORTS, JSON.stringify([]));
+    localStorage.setItem(STORAGE_KEYS.ROADS, JSON.stringify(ROAD_NETWORK));
+    localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify([]));
     localStorage.removeItem(STORAGE_KEYS.ACTIVE_RESCUE);
     localStorage.removeItem(STORAGE_KEYS.ALLOCATIONS);
     localStorage.removeItem(STORAGE_KEYS.CRISIS_SIMULATION);
+    this.logEdit('Reset Demo Environment', 'System', 'Demo environment reset to baseline Mangalore transit network', 'admin', 'Dr. Srivastava');
     this.notify();
   }
 
@@ -196,6 +215,135 @@ class LocalDataStore {
   deleteVehicle(id: string) {
     const list = this.getVehicles().filter(v => v.id !== id);
     this.saveVehicles(list);
+  }
+
+  // -------------------------------------------------------------
+  // ROAD NETWORK GRAPH (BLOCKED / OPEN ROADS)
+  // -------------------------------------------------------------
+  getRoads(): RoadSegment[] {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.ROADS) || JSON.stringify(ROAD_NETWORK));
+  }
+
+  saveRoads(roads: RoadSegment[]) {
+    localStorage.setItem(STORAGE_KEYS.ROADS, JSON.stringify(roads));
+    this.notify();
+  }
+
+  toggleRoadBlocked(roadId: string, isBlocked: boolean, reason?: string) {
+    const roads = this.getRoads();
+    const index = roads.findIndex(r => r.id === roadId);
+    if (index !== -1) {
+      roads[index].isBlocked = isBlocked;
+      roads[index].blockageReason = isBlocked ? (reason || 'Flooding & high water surge') : undefined;
+      this.saveRoads(roads);
+
+      this.logEdit(
+        isBlocked ? 'Blocked Road' : 'Reopened Road',
+        'Road Network',
+        `${roads[index].name} marked ${isBlocked ? 'BLOCKED' : 'OPEN'}`,
+        'admin',
+        'District Transport Officer'
+      );
+
+      // Trigger automatic recalculation notification for affected students
+      if (isBlocked) {
+        this.addNotification({
+          title: 'Road Blockage Advisory',
+          message: `${roads[index].name} is currently BLOCKED. All student transits are rerouted via inland bypass.`,
+          type: 'route_change'
+        });
+      }
+    }
+  }
+
+  updateRoad(roadId: string, updates: Partial<RoadSegment>) {
+    const roads = this.getRoads();
+    const index = roads.findIndex(r => r.id === roadId);
+    if (index !== -1) {
+      roads[index] = { ...roads[index], ...updates };
+      this.saveRoads(roads);
+    }
+  }
+
+  // -------------------------------------------------------------
+  // AUDIT & EDIT HISTORY LOGS
+  // -------------------------------------------------------------
+  getAuditLogs(): AuditLogEntry[] {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.AUDIT_LOGS) || '[]');
+  }
+
+  logEdit(
+    action: string, 
+    targetEntity: string, 
+    details: string, 
+    userRole: 'admin' | 'student' | 'driver' | 'system' = 'admin',
+    performedBy: string = 'User'
+  ) {
+    const logs = this.getAuditLogs();
+    const newEntry: AuditLogEntry = {
+      id: `log-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      timestamp: new Date().toISOString(),
+      performedBy,
+      userRole,
+      action,
+      targetEntity,
+      details
+    };
+    logs.unshift(newEntry);
+    // Keep last 100 logs
+    localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(logs.slice(0, 100)));
+    this.notify();
+  }
+
+  // -------------------------------------------------------------
+  // REAL-TIME NOTIFICATIONS FOR AFFECTED STUDENTS
+  // -------------------------------------------------------------
+  getNotifications(studentId?: string): StudentNotification[] {
+    const all = JSON.parse(localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS) || '[]') as StudentNotification[];
+    if (!studentId) return all;
+    return all.filter(n => !n.studentId || n.studentId === studentId);
+  }
+
+  addNotification(notif: Omit<StudentNotification, 'id' | 'timestamp' | 'isRead'>) {
+    const list = this.getNotifications();
+    // Anti-spam check: avoid repeated duplicate notification within 1 minute
+    const recentDuplicate = list.find(n => 
+      n.title === notif.title && 
+      n.message === notif.message && 
+      (Date.now() - new Date(n.timestamp).getTime()) < 60000
+    );
+    if (recentDuplicate) return;
+
+    const newNotif: StudentNotification = {
+      id: `notif-${Date.now()}`,
+      ...notif,
+      timestamp: new Date().toISOString(),
+      isRead: false
+    };
+    list.unshift(newNotif);
+    localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify(list.slice(0, 50)));
+    this.notify();
+  }
+
+  markNotificationRead(id: string) {
+    const list = this.getNotifications();
+    const item = list.find(n => n.id === id);
+    if (item) {
+      item.isRead = true;
+      localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify(list));
+      this.notify();
+    }
+  }
+
+  notifyAffectedStudentsOnBusTimingChange(busId: string, oldTiming: string, newTiming: string) {
+    const bus = this.getVehicles().find(v => v.id === busId);
+    const busName = bus?.name || bus?.vehicleCode || 'Your bus';
+
+    this.addNotification({
+      title: 'Bus Timing Updated',
+      message: `${busName} departure updated from ${oldTiming} to ${newTiming}. Check your live countdown.`,
+      type: 'timing_change'
+    });
   }
 
   // -------------------------------------------------------------
@@ -312,6 +460,24 @@ class LocalDataStore {
   savePickupRequests(requests: PickupRequest[]) {
     localStorage.setItem(STORAGE_KEYS.PICKUP_REQUESTS, JSON.stringify(requests));
     this.notify();
+  }
+
+  updatePickupRequest(requestId: string, updates: Partial<PickupRequest>): { success: boolean; error?: string } {
+    const list = this.getPickupRequests();
+    const index = list.findIndex(r => r.id === requestId);
+    if (index === -1) return { success: false, error: 'Pickup request not found.' };
+
+    const current = list[index];
+    if (current.status === 'accepted' || current.status === 'on_the_way' || current.status === 'picked_up') {
+      return { 
+        success: false, 
+        error: 'Cannot edit request once accepted by a driver. You can cancel and submit a new request.' 
+      };
+    }
+
+    list[index] = { ...current, ...updates };
+    this.savePickupRequests(list);
+    return { success: true };
   }
 
   createPickupRequest(req: PickupRequest) {
